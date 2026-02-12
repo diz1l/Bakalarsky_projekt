@@ -1,0 +1,53 @@
+@use '../../../assets/scss/variables' as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+
+.sm { width: 400px; }
+.md { width: 560px; }
+.lg { width: 720px; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.close {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: $text-light;
+  padding: 4px;
+  border-radius: 4px;
+  &:hover { color: $text-primary; background: $bg-main; }
+}
+
+.body {
+  padding: 20px 24px 24px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,0 +1,172 @@
+﻿@use '../../../assets/scss/variables' as *;
+@use '../../../assets/scss/mixins' as *;
+
+.page {
+  max-width: 1200px;
+}
+
+.title {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+}
+
+.cardLabel {
+  font-size: 0.8125rem;
+  color: $text-secondary;
+  font-weight: 500;
+}
+
+.cardValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.section {
+  @include card;
+  padding: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+}
+
+.sectionLink {
+  font-size: 0.8125rem;
+  color: $primary;
+
+  &:hover {
+    color: $primary-dark;
+  }
+}
+
+.emptyText {
+  font-size: 0.875rem;
+  color: $text-secondary;
+}
+
+.shiftList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.shiftCard {
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8125rem;
+}
+
+.dept {
+  color: $text-light;
+  font-size: 0.75rem;
+}
+
+.notificationSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notificationItem {
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.notificationTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.notificationMeta {
+  font-size: 0.75rem;
+  color: $text-light;
+}
+
+.deptList,
+.alertList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deptItem,
+.alertItem {
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alertItem {
+  justify-content: flex-start;
+  border-left: 3px solid $warning;
+  color: $text-secondary;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .cardValue {
+    font-size: 1.4rem;
+  }
+
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 14px;
+  }
+}

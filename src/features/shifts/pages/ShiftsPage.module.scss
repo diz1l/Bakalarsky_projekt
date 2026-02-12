@@ -1,0 +1,145 @@
+@use 'sass:color';
+@use '../../../assets/scss/variables' as *;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  h1 { font-size: 1.5rem; }
+}
+
+.weekNav {
+  display: flex;
+  gap: 6px;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.dayCol {
+  background: $bg-surface;
+  border-radius: $radius;
+  box-shadow: $shadow-sm;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.today { border: 2px solid $primary; }
+
+.dayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid $border;
+}
+
+.dayName { font-weight: 600; font-size: 0.8125rem; }
+.dayDate { font-size: 0.75rem; color: $text-light; }
+
+.dayBody {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.shiftCard {
+  position: relative;
+  padding: 8px 10px;
+  background: $bg-main;
+  border-radius: $radius-sm;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  &:hover { background: rgba($primary, 0.06); }
+}
+
+.shiftName { font-weight: 600; }
+.shiftTime { color: $text-secondary; font-size: 0.75rem; }
+
+.delBtn {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 1rem;
+  color: $text-light;
+  &:hover { color: $danger; }
+}
+
+.addDay {
+  margin-top: auto;
+  text-align: center;
+  padding: 6px;
+  font-size: 0.75rem;
+  color: $text-light;
+  border-radius: $radius-sm;
+  &:hover { background: $bg-main; color: $primary; }
+}
+
+.timeRow { display: flex; gap: 12px; }
+
+.conflict {
+  background: rgba($warning, 0.1);
+  color: color.adjust($warning, $lightness: -10%);
+  padding: 10px 14px;
+  border-radius: $radius;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+@media (max-width: 1200px) {
+  .weekGrid {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(220px, 1fr);
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .dayCol {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .weekNav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .timeRow {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .formActions {
+    flex-wrap: wrap;
+  }
+
+  .formActions > * {
+    width: 100%;
+  }
+}

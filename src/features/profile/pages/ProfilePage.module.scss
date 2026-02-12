@@ -1,0 +1,113 @@
+﻿@use '../../../assets/scss/variables' as *;
+@use '../../../assets/scss/mixins' as *;
+
+.title {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.card {
+  @include card;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: $primary;
+  color: #fff;
+  @include flex-center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.info {
+  h2 {
+    font-size: 1.125rem;
+  }
+}
+
+.email {
+  color: $text-secondary;
+  font-size: 0.875rem;
+  margin-bottom: 6px;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+}
+
+.formsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  @include card;
+
+  h3 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.note {
+  font-size: 0.8125rem;
+  color: $text-light;
+  margin-top: 16px;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .title {
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+  }
+
+  .card {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .badges {
+    flex-wrap: wrap;
+  }
+
+  .formsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 16px;
+  }
+
+  .avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.2rem;
+  }
+
+  .formActions {
+    justify-content: stretch;
+  }
+
+  .formActions > button {
+    width: 100%;
+  }
+}

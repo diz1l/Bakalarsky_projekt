@@ -1,0 +1,190 @@
+﻿@use '../../../assets/scss/variables' as *;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+}
+
+.filterBtn {
+  border: 1px solid $border;
+  background: $bg-surface;
+  color: $text-secondary;
+  border-radius: $radius;
+  font-size: 0.8125rem;
+  padding: 6px 10px;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+.activeFilter {
+  border-color: $primary;
+  color: $primary;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+  padding: 20px 24px;
+}
+
+.completed {
+  opacity: 0.85;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 10px;
+
+  h3 {
+    font-size: 1rem;
+  }
+}
+
+.headerBadges {
+  display: flex;
+  gap: 8px;
+}
+
+.content {
+  font-size: 0.875rem;
+  color: $text-secondary;
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.completedTitle {
+  text-decoration: line-through;
+  color: $text-light;
+}
+
+.meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: $text-light;
+}
+
+.actions {
+  margin-top: 12px;
+  border-top: 1px solid $border;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.doneToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: $text-secondary;
+  font-size: 0.8125rem;
+
+  input {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+@media (max-width: 992px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolbarRight {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .toolbar h1 {
+    font-size: 1.25rem;
+  }
+
+  .toolbarRight {
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filters {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .filterBtn {
+    white-space: nowrap;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .cardHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions > button {
+    width: 100%;
+  }
+
+  .formActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .formActions > button {
+    width: 100%;
+  }
+}

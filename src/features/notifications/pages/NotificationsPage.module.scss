@@ -1,0 +1,167 @@
+﻿@use '../../../assets/scss/variables' as *;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: $bg-surface;
+  border-radius: $radius;
+  box-shadow: $shadow-sm;
+  transition: $transition;
+
+  &:hover {
+    box-shadow: $shadow;
+  }
+}
+
+.unread {
+  border-left: 3px solid $primary;
+  background: rgba($primary, 0.03);
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.info {
+  background: rgba($info, 0.12);
+  color: $info;
+}
+
+.warning {
+  background: rgba($warning, 0.12);
+  color: $warning;
+}
+
+.success {
+  background: rgba($success, 0.12);
+  color: $success;
+}
+
+.error {
+  background: rgba($danger, 0.12);
+  color: $danger;
+}
+
+.body {
+  flex: 1;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 2px;
+}
+
+.msg {
+  font-size: 0.8125rem;
+  color: $text-secondary;
+  margin-bottom: 4px;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: $text-light;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailMessage {
+  font-size: 0.875rem;
+  color: $text-secondary;
+  line-height: 1.5;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  font-size: 0.8125rem;
+
+  span {
+    color: $text-light;
+  }
+
+  strong {
+    font-weight: 600;
+    color: $text-primary;
+  }
+}
+
+@media (max-width: 992px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .toolbarActions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .body {
+    min-width: 0;
+  }
+
+  .card > button {
+    width: 100%;
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .detailGrid span {
+    margin-top: 8px;
+  }
+
+  .detailGrid span:first-child {
+    margin-top: 0;
+  }
+}

@@ -1,0 +1,21 @@
+@use '../../../assets/scss/variables' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: $text-secondary;
+}
+
+.req { color: $danger; margin-left: 2px; }
+
+.error {
+  font-size: 0.75rem;
+  color: $danger;
+}

@@ -1,0 +1,21 @@
+@use '../../../assets/scss/variables' as *;
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  border: 1px solid $border;
+  border-radius: $radius;
+  background: $bg-surface;
+  transition: $transition;
+  outline: none;
+
+  &::placeholder { color: $text-light; }
+  &:focus { border-color: $border-focus; box-shadow: 0 0 0 3px rgba($primary, 0.1); }
+  &:disabled { background: $bg-main; cursor: not-allowed; }
+}
+
+.error {
+  border-color: $danger;
+  &:focus { box-shadow: 0 0 0 3px rgba($danger, 0.1); }
+}

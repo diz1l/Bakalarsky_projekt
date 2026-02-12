@@ -1,0 +1,18 @@
+@use 'sass:color';
+@use '../../../assets/scss/variables' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: $radius-full;
+  white-space: nowrap;
+}
+
+.default { background: $bg-main; color: $text-secondary; }
+.success { background: rgba($success, 0.12); color: color.adjust($success, $lightness: -10%); }
+.warning { background: rgba($warning, 0.12); color: color.adjust($warning, $lightness: -10%); }
+.danger  { background: rgba($danger, 0.12);  color: color.adjust($danger, $lightness: -10%); }
+.info    { background: rgba($info, 0.12);    color: color.adjust($info, $lightness: -10%); }

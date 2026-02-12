@@ -1,0 +1,26 @@
+@use 'variables' as *;
+
+@mixin card {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+  padding: 24px;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

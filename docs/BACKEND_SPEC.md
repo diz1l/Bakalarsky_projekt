@@ -382,6 +382,8 @@ backend/
 
 ## 8. Порядок реализации (чек-лист)
 
+> Каркас уже есть в `backend/` (см. `backend/README.md`): пункты 1–11 и 14 реализованы, 12, 13, 15 — нет.
+
 1. [ ] `backend/` каркас: Express, config, обработчик ошибок, `/api/health`.
 2. [ ] Prisma-схема + миграция + seed демо-данными.
 3. [ ] Auth: login, guest, me, profile, change-password (bcrypt + JWT).

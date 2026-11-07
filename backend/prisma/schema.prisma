@@ -1,0 +1,176 @@
+// SQLite for local development; switch provider to "postgresql" for production.
+// Enum-like fields are plain strings so the schema works on both databases.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  login        String   @unique
+  email        String   @unique
+  name         String
+  role         String // ADMIN | MANAGER | EMPLOYEE
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  employee      Employee?
+  notifications Notification[]
+}
+
+model Employee {
+  id         String  @id @default(cuid())
+  userId     String? @unique
+  user       User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName  String
+  lastName   String
+  email      String
+  phone      String
+  role       String
+  department String
+  position   String
+  hireDate   String // YYYY-MM-DD
+  status     String  @default("active") // active | inactive
+
+  shifts   Shift[]
+  absences Absence[]
+}
+
+model Shift {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       String // YYYY-MM-DD, hotel local date the shift starts on
+  type       String // DAY | NIGHT
+  startTime  String   @default("")
+  endTime    String   @default("")
+  department String
+  notes      String?
+  status     String   @default("scheduled")
+
+  @@index([date])
+}
+
+model Absence {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       String
+  type       String // PAID_LEAVE | SICK | UNAVAILABLE
+  note       String?
+
+  @@unique([employeeId, date])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String // info | warning | success | error
+  read        Boolean  @default(false)
+  senderName  String
+  senderEmail String
+  relatedType String?
+  relatedId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Announcement {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  authorId    String
+  authorName  String
+  priority    String // low | medium | high
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  completedBy String?
+  createdAt   DateTime  @default(now())
+}
+
+model TaskTemplate {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  shiftType   String // DAY | NIGHT | ANY
+  department  String // department name or ALL
+  weekdays    String  @default("") // comma separated ISO weekdays, empty = every day
+  dueTime     String?
+  priority    String  @default("medium")
+  active      Boolean @default(true)
+  createdBy   String
+
+  tasks ShiftTask[]
+}
+
+model ShiftTask {
+  id              String        @id @default(cuid())
+  templateId      String?
+  template        TaskTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  title           String
+  description     String?
+  date            String
+  shiftType       String
+  department      String
+  assigneeId      String?
+  priority        String        @default("medium")
+  dueTime         String?
+  status          String        @default("open") // open | done | skipped
+  carriedOverFrom String?       @unique
+  createdBy       String
+  createdByName   String
+  createdAt       DateTime      @default(now())
+  completedBy     String?
+  completedByName String?
+  completedAt     DateTime?
+  comment         String?
+
+  @@unique([templateId, date, shiftType])
+  @@index([date, shiftType])
+}
+
+model HandoverNote {
+  id              String    @id @default(cuid())
+  date            String
+  shiftType       String
+  targetDate      String
+  targetShiftType String
+  department      String
+  category        String
+  priority        String // normal | important | critical
+  title           String
+  content         String
+  requiresAction  Boolean   @default(false)
+  authorId        String
+  authorName      String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  resolvedBy      String?
+  resolvedAt      DateTime?
+
+  acknowledgements HandoverAck[]
+
+  @@index([targetDate, targetShiftType])
+}
+
+model HandoverAck {
+  id            String       @id @default(cuid())
+  noteId        String
+  note          HandoverNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  userId        String
+  userName      String
+  readAt        DateTime     @default(now())
+  actionTakenAt DateTime?
+  comment       String?
+
+  @@unique([noteId, userId])
+}

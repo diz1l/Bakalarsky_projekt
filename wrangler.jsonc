@@ -1,0 +1,10 @@
+{
+  // Must match the Worker name in the Cloudflare dashboard.
+  "name": "bakalarsky-projekt",
+  "compatibility_date": "2026-11-01",
+  // Static React SPA: client-side routes like /tasks fall back to index.html.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

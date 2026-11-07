@@ -65,7 +65,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       persistSession(action.payload.token, action.payload.user);
     },
-    patchSessionUser(state, action: PayloadAction<Partial<Pick<User, 'name' | 'email' | 'login'>>>) {
+    patchSessionUser(state, action: PayloadAction<Partial<Pick<User, 'name' | 'email' | 'login' | 'mustChangePassword'>>>) {
       if (!state.user) return;
       state.user = { ...state.user, ...action.payload };
       persistSession(state.token, state.user);

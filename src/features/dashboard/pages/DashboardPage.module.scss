@@ -1,5 +1,6 @@
 ﻿@use '../../../assets/scss/variables' as *;
 @use '../../../assets/scss/mixins' as *;
+@use 'sass:color';
 
 .page {
   max-width: 1200px;
@@ -37,7 +38,7 @@
   color: $text-primary;
 }
 
-.cardDetail { display:block; margin-top:3px; color:$danger; font-size:.72rem; font-weight:600; }
+.cardDetail { display:block; margin-top:3px; color:color.adjust($danger, $lightness: -18%); font-size:.72rem; font-weight:600; }
 
 .split {
   display: grid;
@@ -94,7 +95,7 @@
 }
 
 .dept {
-  color: $text-light;
+  color: $text-secondary;
   font-size: 0.75rem;
 }
 
@@ -121,7 +122,7 @@
 
 .notificationMeta {
   font-size: 0.75rem;
-  color: $text-light;
+  color: $text-secondary;
 }
 
 .deptList,
@@ -151,6 +152,8 @@
 :global(html[data-theme='dark']) .cardLabel,
 :global(html[data-theme='dark']) .emptyText,
 :global(html[data-theme='dark']) .notificationMeta { color:#94a3b8; }
+:global(html[data-theme='dark']) .cardValue { color:#e5e7eb; }
+:global(html[data-theme='dark']) .cardDetail { color:#fca5a5; }
 
 .alertItem {
   justify-content: flex-start;

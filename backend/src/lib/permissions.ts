@@ -2,7 +2,7 @@
 export type Role = 'ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'GUEST';
 
 const staff = [
-  'shifts.view', 'notifications.view', 'notifications.manage', 'announcements.view', 'profile.view', 'profile.edit',
+  'shifts.view', 'shifts.viewAll', 'notifications.view', 'notifications.manage', 'announcements.view', 'profile.view', 'profile.edit',
   'dashboard.view', 'tasks.view', 'tasks.create', 'tasks.complete', 'handover.view', 'handover.create', 'handover.acknowledge',
 ] as const;
 
@@ -12,7 +12,7 @@ const management = [
 ] as const;
 
 const rolePermissions: Record<Role, readonly string[]> = {
-  ADMIN: [...management, 'employees.delete', 'shifts.delete'],
+  ADMIN: [...management, 'employees.delete', 'shifts.delete', 'accounts.manage'],
   MANAGER: management,
   EMPLOYEE: staff,
   GUEST: ['dashboard.view', 'shifts.view', 'shifts.viewAll', 'notifications.view', 'announcements.view', 'tasks.view', 'handover.view'],

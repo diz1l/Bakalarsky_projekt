@@ -5,18 +5,36 @@ import App from '@/App';
 import { renderAtRoute } from '@/test/render';
 import { db } from '@/mocks/data/db';
 
-async function signIn(user: ReturnType<typeof userEvent.setup>, email: string, name: RegExp) {
-  await user.type(screen.getByPlaceholderText('admin@hotel.com'), email);
-  await user.type(screen.getByPlaceholderText('password123'), 'password123');
+async function signIn(
+  user: ReturnType<typeof userEvent.setup>,
+  email: string,
+  password = 'password123',
+) {
+  await user.type(screen.getByPlaceholderText('name@hotel.com'), email);
+  await user.type(screen.getByPlaceholderText('Enter your password'), password);
   await user.click(screen.getByRole('button', { name: 'Sign in' }));
-  await screen.findByText(name);
+  await waitFor(() => {
+    expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}').email).toBe(email);
+  });
+  if (JSON.parse(localStorage.getItem('auth_user') ?? '{}').mustChangePassword) {
+    await screen.findByRole('alert');
+    await user.type(screen.getByPlaceholderText('Current password'), 'password123');
+    await user.type(screen.getByPlaceholderText('New password'), 'team-member-new-password');
+    await user.type(screen.getByPlaceholderText('Confirm new password'), 'team-member-new-password');
+    await user.click(screen.getByRole('button', { name: 'Update password' }));
+    await screen.findByText('Password updated successfully');
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}').mustChangePassword).toBe(false);
+    });
+  }
+  await screen.findByRole('button', { name: 'Sign out' });
 }
 
 describe('Shift tasks and handover (mock mode)', () => {
   test('Employee completes a task of the current shift', async () => {
     const user = userEvent.setup();
     renderAtRoute(<App />, '/login');
-    await signIn(user, 'employee@hotel.com', /Welcome back, Mike Wilson/i);
+    await signIn(user, 'employee@hotel.com');
 
     await user.click(screen.getByRole('link', { name: 'Shift tasks' }));
     const checkbox = await screen.findByRole('checkbox', { name: /Restock minibar/ });
@@ -31,7 +49,7 @@ describe('Shift tasks and handover (mock mode)', () => {
     db.shifts = [];
     const user = userEvent.setup();
     renderAtRoute(<App />, '/login');
-    await signIn(user, 'manager@hotel.com', /Welcome back, Sarah Connor/i);
+    await signIn(user, 'manager@hotel.com');
 
     await user.click(screen.getByRole('link', { name: /^Shift handover/ }));
     await user.click(await screen.findByRole('button', { name: /Pass information/ }));
@@ -42,7 +60,7 @@ describe('Shift tasks and handover (mock mode)', () => {
     expect(await screen.findByText('Late arrival in 207')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
-    await signIn(user, 'employee@hotel.com', /Welcome back, Mike Wilson/i);
+    await signIn(user, 'employee@hotel.com');
     await user.click(screen.getByRole('link', { name: /^Shift handover/ }));
 
     const card = (await screen.findByText('Late arrival in 207')).closest('article')!;

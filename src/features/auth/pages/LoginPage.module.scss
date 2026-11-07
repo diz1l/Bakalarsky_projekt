@@ -10,8 +10,6 @@
 }
 
 :global(html[data-theme='dark']) .card { background:#111827; color:#e5e7eb; border-color:#334155; }
-:global(html[data-theme='dark']) .subtitle,
-:global(html[data-theme='dark']) .hint { color:#94a3b8; }
 
 .card {
   width: 100%;

@@ -14,7 +14,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
       <div className={s.right}>
         <Badge variant="info">{user?.role}</Badge>
         <span className={s.name}>{user?.name}</span>
-        <Button variant="ghost" size="sm" onClick={logout}>
+        <Button variant="ghost" size="sm" style={{ color: '#f8fafc', backgroundColor: '#334155' }} onClick={logout}>
           {t('Sign out')}
         </Button>
       </div>

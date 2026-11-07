@@ -6,6 +6,7 @@ import { announcementsHandlers } from './announcements';
 import { absencesHandlers } from './absences';
 import { tasksHandlers } from './tasks';
 import { handoverHandlers } from './handover';
+import { scheduleRequestsHandlers } from './scheduleRequests';
 
 export const handlers = [
   ...authHandlers,
@@ -16,4 +17,5 @@ export const handlers = [
   ...absencesHandlers,
   ...tasksHandlers,
   ...handoverHandlers,
+  ...scheduleRequestsHandlers,
 ];

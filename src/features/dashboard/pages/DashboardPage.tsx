@@ -1,6 +1,6 @@
 ﻿import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
-import { useGetEmployeesQuery } from '@/features/employees/api/employeesApi';
+import { useGetEmployeesQuery, useGetScheduleRosterQuery } from '@/features/employees/api/employeesApi';
 import { useGetShiftsQuery } from '@/features/shifts/api/shiftsApi';
 import { useGetNotificationsQuery } from '@/features/notifications/api/notificationsApi';
 import { useGetAnnouncementsQuery } from '@/features/announcements/api/announcementsApi';
@@ -41,7 +41,9 @@ export function DashboardPage() {
   nextWeekBase.setDate(nextWeekBase.getDate() + 7);
   const nextWeekStart = toDateString(getWeekDates(nextWeekBase)[0]);
 
-  const { data: employees = [] } = useGetEmployeesQuery();
+  const canViewEmployees = can('employees.view');
+  const { data: employees = [] } = useGetEmployeesQuery(undefined, { skip: !canViewEmployees });
+  const { data: rosterEmployees = [] } = useGetScheduleRosterQuery(undefined, { skip: canViewEmployees });
   const { data: weekShifts = [] } = useGetShiftsQuery({ weekStart: thisWeekStart });
   const { data: nextWeekShifts = [] } = useGetShiftsQuery({ weekStart: nextWeekStart });
   const { data: notifications = [] } = useGetNotificationsQuery(user?.id ?? '');
@@ -66,8 +68,8 @@ export function DashboardPage() {
     });
 
   const activeEmployees = useMemo(
-    () => employees.filter((employee) => employee.status === 'active'),
-    [employees],
+    () => (canViewEmployees ? employees : rosterEmployees).filter((employee) => employee.status === 'active'),
+    [canViewEmployees, employees, rosterEmployees],
   );
 
   const employeesByDepartment = useMemo(() => {
@@ -143,7 +145,7 @@ export function DashboardPage() {
       <div className={s.grid}>
         <div className={s.card}>
           <span className={s.cardLabel}>{t('Active Employees')}</span>
-          <span className={s.cardValue}>{can('employees.view') ? activeEmployees.length : '-'}</span>
+          <span className={s.cardValue}>{activeEmployees.length}</span>
         </div>
         <div className={s.card}>
           <span className={s.cardLabel}>{t('Upcoming Shifts (7 days)')}</span>
@@ -218,9 +220,7 @@ export function DashboardPage() {
               </Link>
             )}
           </div>
-          {!can('employees.view') ? (
-            <p className={s.emptyText}>{t('Hidden for your role.')}</p>
-          ) : employeesByDepartment.length === 0 ? (
+          {employeesByDepartment.length === 0 ? (
             <p className={s.emptyText}>{t('No active employee data.')}</p>
           ) : (
             <ul className={s.deptList}>

@@ -7,7 +7,19 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  mustChangePassword?: boolean;
   avatar?: string;
+}
+
+export interface ManagedAccount {
+  id: string;
+  login: string;
+  email: string;
+  name: string;
+  role: StaffRole;
+  mustChangePassword: boolean;
+  employeeId: string;
+  employeeName: string;
 }
 
 export interface Employee {
@@ -63,6 +75,17 @@ export interface Absence {
   date: string;
   type: AbsenceType;
   note?: string;
+}
+
+export interface ScheduleRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  date: string;
+  type: AbsenceType;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';

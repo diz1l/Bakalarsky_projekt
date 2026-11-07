@@ -12,13 +12,14 @@ interface ShiftCellProps {
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
+  canRequest: boolean;
   onEdit: (shift: Shift) => void;
   onPickStatus: () => void;
   onDeleteShift: (id: string) => void;
   onClearAbsence: () => void;
 }
 
-export function ShiftCell({ shift, absence, date, today, canCreate, canEdit, canDelete, onEdit, onPickStatus, onDeleteShift, onClearAbsence }: ShiftCellProps) {
+export function ShiftCell({ shift, absence, date, today, canCreate, canEdit, canDelete, canRequest, onEdit, onPickStatus, onDeleteShift, onClearAbsence }: ShiftCellProps) {
   const { t } = useLocale();
   const absenceCode = absence ? { PAID_LEAVE: 'H', SICK: 'S', UNAVAILABLE: '×' }[absence.type] : '';
   const code = absenceCode || (shift ? getShiftType(shift) === 'NIGHT' ? 'N' : 'D' : '');
@@ -27,9 +28,7 @@ export function ShiftCell({ shift, absence, date, today, canCreate, canEdit, can
     ? `${shift.startTime && shift.endTime ? `${formatTime(shift.startTime)}–${formatTime(shift.endTime)} · ` : ''}${shift.department}`
     : t('Choose shift type');
 
-  return <td className={`${code ? s[`code${styleCode}`] : ''} ${today ? s.todayCell : ''}`} data-date={date}>
-    <button title={title} onClick={() => { if (shift && canEdit) onEdit(shift); else if (!shift && canCreate) onPickStatus(); }} onContextMenu={(event) => { event.preventDefault(); if (shift && canDelete) onDeleteShift(shift.id); else if (absence && canCreate) onClearAbsence(); }}>
-      {code || (canCreate ? '+' : '—')}
-    </button>
-  </td>;
+  return <button className={`${s.shiftCellButton} ${code ? s[`code${styleCode}`] : ''} ${today ? s.todayCell : ''}`} data-date={date} title={title} disabled={!shift && !canCreate && (!canRequest || !!absence)} onClick={() => { if (shift && canEdit) onEdit(shift); else if (absence && canCreate) onPickStatus(); else if (!absence && (canRequest || canCreate)) onPickStatus(); }} onContextMenu={(event) => { event.preventDefault(); if (shift && canDelete) onDeleteShift(shift.id); else if (absence && canCreate) onClearAbsence(); }}>
+      {code || (canCreate || canRequest ? '+' : '—')}
+    </button>;
 }

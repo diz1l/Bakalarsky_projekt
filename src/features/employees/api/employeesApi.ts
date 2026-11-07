@@ -10,6 +10,14 @@ export const employeesApi = baseApi.injectEndpoints({
           ? [...result.map(({ id }) => ({ type: 'Employee' as const, id })), { type: 'Employee', id: 'LIST' }]
           : [{ type: 'Employee', id: 'LIST' }],
     }),
+    getScheduleRoster: builder.query<Employee[], void>({
+      query: () => '/employees/roster',
+      providesTags: [{ type: 'Employee', id: 'ROSTER' }],
+    }),
+    getCurrentEmployee: builder.query<Employee | null, void>({
+      query: () => '/employees/me',
+      providesTags: [{ type: 'Employee', id: 'ME' }],
+    }),
     getEmployee: builder.query<Employee, string>({
       query: (id) => `/employees/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Employee', id }],
@@ -35,6 +43,8 @@ export const employeesApi = baseApi.injectEndpoints({
 
 export const {
   useGetEmployeesQuery,
+  useGetScheduleRosterQuery,
+  useGetCurrentEmployeeQuery,
   useGetEmployeeQuery,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,

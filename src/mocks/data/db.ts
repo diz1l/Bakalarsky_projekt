@@ -36,6 +36,7 @@ const seedUsers: MockUser[] = [
     email: 'manager@hotel.com',
     name: 'Sarah Connor',
     role: 'MANAGER',
+    mustChangePassword: true,
     password: 'password123',
   },
   {
@@ -44,6 +45,7 @@ const seedUsers: MockUser[] = [
     email: 'employee@hotel.com',
     name: 'Mike Wilson',
     role: 'EMPLOYEE',
+    mustChangePassword: true,
     password: 'password123',
   },
 ];
@@ -498,12 +500,13 @@ const seedHandoverNotes: HandoverNote[] = [
 const persistedState = loadMockState();
 
 export const db = {
-  users: clone(seedUsers),
+  users: persistedState.users ? clone(persistedState.users) : clone(seedUsers),
   employees: persistedState.employees ? clone(persistedState.employees) : clone(seedEmployees),
   shifts: persistedState.shifts ? clone(persistedState.shifts) : clone(seedShifts),
   notifications: persistedState.notifications ? clone(persistedState.notifications) : clone(seedNotifications),
   announcements: persistedState.announcements ? clone(persistedState.announcements) : clone(seedAnnouncements),
   absences: persistedState.absences ? clone(persistedState.absences) : clone(seedAbsences),
+  scheduleRequests: persistedState.scheduleRequests ? clone(persistedState.scheduleRequests) : [],
   taskTemplates: persistedState.taskTemplates ? clone(persistedState.taskTemplates) : clone(seedTaskTemplates),
   tasks: persistedState.tasks ? clone(persistedState.tasks) : clone(seedTasks),
   handoverNotes: persistedState.handoverNotes ? clone(persistedState.handoverNotes) : clone(seedHandoverNotes),
@@ -518,11 +521,13 @@ export function genId(prefix: string) {
 
 export function persistMockCollections() {
   saveMockState({
+    users: db.users,
     employees: db.employees,
     shifts: db.shifts,
     notifications: db.notifications,
     announcements: db.announcements,
     absences: db.absences,
+    scheduleRequests: db.scheduleRequests,
     taskTemplates: db.taskTemplates,
     tasks: db.tasks,
     handoverNotes: db.handoverNotes,
@@ -540,6 +545,7 @@ export function resetMockDb() {
   db.notifications = clone(seedNotifications);
   db.announcements = clone(seedAnnouncements);
   db.absences = clone(seedAbsences);
+  db.scheduleRequests = [];
   db.taskTemplates = clone(seedTaskTemplates);
   db.tasks = clone(seedTasks);
   db.handoverNotes = clone(seedHandoverNotes);

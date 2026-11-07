@@ -16,6 +16,7 @@ import { AnnouncementsPage } from '@/features/announcements/pages/AnnouncementsP
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
 import { TasksPage } from '@/features/tasks/pages/TasksPage';
 import { HandoverPage } from '@/features/handover/pages/HandoverPage';
+import { AccountsPage } from '@/features/accounts/pages/AccountsPage';
 
 function App() {
   return (
@@ -94,6 +95,14 @@ function App() {
                   element={
                     <RoleGuard permissions={['profile.view']}>
                       <ProfilePage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/accounts"
+                  element={
+                    <RoleGuard permissions={['accounts.manage']}>
+                      <AccountsPage />
                     </RoleGuard>
                   }
                 />

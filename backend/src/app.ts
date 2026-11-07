@@ -5,7 +5,7 @@ import { errorHandler } from './lib/http.js';
 import { requireAuth } from './middleware/auth.js';
 import { authRouter } from './routes/auth.js';
 import { employeesRouter } from './routes/employees.js';
-import { absencesRouter, shiftsRouter } from './routes/shifts.js';
+import { absencesRouter, scheduleRequestsRouter, shiftsRouter } from './routes/shifts.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { announcementsRouter } from './routes/announcements.js';
 import { taskTemplatesRouter, tasksRouter } from './routes/tasks.js';
@@ -28,6 +28,7 @@ export function createApp() {
   api.use('/employees', employeesRouter);
   api.use('/shifts', shiftsRouter);
   api.use('/absences', absencesRouter);
+  api.use('/schedule-requests', scheduleRequestsRouter);
   api.use('/notifications', notificationsRouter);
   api.use('/announcements', announcementsRouter);
   api.use('/tasks', tasksRouter);

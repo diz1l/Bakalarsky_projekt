@@ -9,6 +9,7 @@
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.15s ease;
+  padding: 16px;
 }
 
 .modal {
@@ -26,6 +27,14 @@
 .sm { width: 400px; }
 .md { width: 560px; }
 .lg { width: 720px; }
+
+@media (max-width: 640px) {
+  .overlay { align-items:flex-end; padding:0; }
+  .modal { width:100%; max-width:100%; max-height:min(90dvh, 760px); border-radius:16px 16px 0 0; padding-bottom:env(safe-area-inset-bottom); }
+  .sm,.md,.lg { width:100%; }
+  .header { padding:18px 18px 0; }
+  .body { padding:16px 18px 22px; }
+}
 
 .header {
   display: flex;

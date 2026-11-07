@@ -1,4 +1,5 @@
 @use '../../../assets/scss/variables' as *;
+@use 'sass:color';
 
 .toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:20px; h1 { font-size:1.55rem; letter-spacing:-.03em; } }
 .subtitle { color:$text-secondary; font-size:.875rem; margin-top:3px; }
@@ -17,10 +18,10 @@
 .removeEmployee { position:absolute; right:6px; top:50%; transform:translateY(-50%); opacity:0; color:$text-secondary; border-radius:5px; width:22px; height:22px; &:hover { color:$danger; background:rgba($danger,.1); } }
 .employeeName:hover .removeEmployee,.removeEmployee:focus-visible { opacity:1; }
 .schedule td { width:43px; height:38px; padding:2px; background:$bg-surface; }
-.schedule td button { width:100%; height:32px; border-radius:6px; color:$text-secondary; font-size:.75rem; font-weight:650; }
-.schedule td button:hover { outline:2px solid $primary; outline-offset:-2px; }
+.shiftCellButton { width:100%; min-width:38px; height:32px; border-radius:6px; color:$text-secondary; font-size:.75rem; font-weight:650; touch-action:manipulation; }
+.schedule td button:hover,.shiftCellButton:focus-visible { outline:2px solid $primary; outline-offset:-2px; }
 .todayHead { background:rgba($primary,.12)!important; }
-.todayCell { box-shadow:inset 0 0 0 1px rgba($primary,.45); }
+.todayCell { box-shadow:inset 0 0 0 2px rgba($primary,.55); }
 .codeD { background:#dbeafe!important; color:#1d4ed8!important; }
 .codeN { background:#e0e7ff!important; color:#4338ca!important; }
 .codeH { background:#dcfce7!important; color:#15803d!important; }
@@ -31,6 +32,14 @@
 .legend i { width:23px; height:23px; border-radius:5px; display:grid; place-items:center; font-style:normal; font-weight:700; }
 .hint { margin-left:auto; }
 .rosterTools { display:flex; justify-content:flex-end; align-items:center; gap:12px; color:$text-secondary; font-size:.8rem; margin:-4px 0 12px; }
+.requestsPanel { margin-top:16px; padding:16px; border:1px solid $border; border-radius:14px; background:$bg-surface; h2 { font-size:1rem; margin-bottom:10px; } }
+.requestList { display:grid; gap:8px; }
+.requestItem { display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid $border; border-radius:10px; min-width:0; >div:first-child { flex:1; min-width:0; } strong,span { display:block; } >div:first-child span { margin-top:3px; color:$text-secondary; font-size:.76rem; } }
+.requestStatus { padding:4px 8px; border-radius:99px; font-size:.7rem; font-weight:650; white-space:nowrap; }
+.requestPENDING { background:rgba($warning,.14); color:color.adjust($warning, $lightness: -16%); }
+.requestAPPROVED { background:rgba($success,.14); color:color.adjust($success, $lightness: -10%); }
+.requestREJECTED { background:rgba($danger,.12); color:$danger; }
+.requestActions { display:flex; gap:6px; }
 .assignedTo { padding:10px 12px; border-radius:8px; background:rgba($primary,.08); margin-bottom:14px; color:$text-secondary; font-size:.85rem; strong { color:$text-primary; margin-left:4px; } }
 .typePicker,.statusChoices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:12px 0 16px; }
 .typePicker button,.statusChoices button { display:flex; align-items:center; gap:10px; min-height:52px; padding:8px 12px; border:1px solid $border; border-radius:9px; text-align:left; background:$bg-surface; color:$text-primary; transition:$transition; &:hover { border-color:$primary; transform:translateY(-1px); } }
@@ -46,11 +55,46 @@
 .timeRow { display:flex; gap:12px; }
 .conflict { background:rgba($warning,.1); color:$warning; padding:10px 14px; border-radius:$radius; font-size:.8125rem; margin-bottom:12px; }
 .formActions { display:flex; justify-content:flex-end; gap:12px; padding-top:8px; }
+.mobileSchedule { display:none; }
 :global(html[data-theme='dark']) .scheduleCard { background:#111827; border-color:#334155; }
 :global(html[data-theme='dark']) .schedule thead th { background:#172033; color:#94a3b8; }
 :global(html[data-theme='dark']) .schedule thead th b { color:#e5e7eb; }
 :global(html[data-theme='dark']) .employeeName,
-:global(html[data-theme='dark']) .schedule td { background:#111827; color:#e5e7eb; }
+:global(html[data-theme='dark']) .schedule td,
+:global(html[data-theme='dark']) .requestsPanel,
+:global(html[data-theme='dark']) .mobilePerson { background:#111827; color:#e5e7eb; }
+:global(html[data-theme='dark']) .requestItem { border-color:#334155; }
+:global(html[data-theme='dark']) .mobileDateNav select { color:#e5e7eb; }
 :global(html[data-theme='dark']) .subtitle,
 :global(html[data-theme='dark']) .employeeName small { color:#94a3b8; }
-@media(max-width:768px) { .toolbar { align-items:stretch; } .weekNav { width:100%; justify-content:space-between; } .timeRow { flex-direction:column; gap:0; } .formActions { flex-wrap:wrap; } .formActions>* { width:100%; } .tableScroll { max-height:calc(100vh - 310px); } }
+@media(max-width:768px) {
+  .toolbar { align-items:stretch; gap:12px; margin-bottom:14px; h1 { font-size:1.3rem; } }
+  .weekNav { width:100%; justify-content:space-between; }
+  .rosterTools { justify-content:space-between; flex-wrap:wrap; }
+  .requestsPanel { padding:12px; }
+  .requestItem { flex-wrap:wrap; gap:8px; }
+  .requestItem >div:first-child { flex-basis:calc(100% - 92px); }
+  .requestActions { width:100%; }
+  .requestActions>* { flex:1; }
+  .timeRow { flex-direction:column; gap:0; }
+  .formActions { flex-wrap:wrap; }
+  .formActions>* { width:100%; }
+  .tableScroll { display:none; }
+  .mobileSchedule { display:block; }
+  .mobileDateNav { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-bottom:1px solid $border; }
+  .mobileDateNav label { flex:1; min-width:0; text-align:center; }
+  .mobileDateNav label span { display:block; color:$text-secondary; font-size:.68rem; margin-bottom:3px; }
+  .mobileDateNav select { max-width:100%; border:0; background:transparent; color:$text-primary; font:inherit; font-weight:700; text-align:center; }
+  .mobilePeople { max-height:calc(100dvh - 320px); min-height:180px; overflow:auto; overscroll-behavior:contain; }
+  .mobilePerson { min-height:62px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid $border; }
+  .mobilePersonInfo { min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .mobilePersonInfo strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.85rem; }
+  .mobilePersonInfo span { color:$text-secondary; font-size:.72rem; }
+  .mobilePersonShift { flex:0 0 72px; display:flex; align-items:center; gap:5px; }
+  .mobilePersonShift .shiftCellButton { width:42px; min-width:42px; height:42px; border:1px solid $border; border-radius:10px; font-size:1rem; }
+  .mobilePersonShift small { color:$text-secondary; font-size:.65rem; white-space:nowrap; }
+  .legend { gap:8px 12px; padding:11px 12px; }
+  .hint { width:100%; margin-left:0; }
+  .scheduleCard { border-radius:12px; }
+}
+@media(max-width:380px) { .weekNav { gap:3px; } .weekNav button { padding-inline:7px; font-size:.72rem; } .mobileDateNav { padding-inline:8px; } .mobilePerson { padding-inline:9px; } }

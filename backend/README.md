@@ -9,13 +9,13 @@ cd backend
 cp .env.example .env
 npm ci
 npx prisma migrate dev
-npm run db:seed                 # demo users use password: password123
+npm run db:seed                 # admin demo login: admin@hotel.com / password123
 npm run dev                     # http://localhost:3000/api
 ```
 
 Set `VITE_USE_MOCKS=false` in the frontend environment to use the API. The reset-password endpoint sends one-time links through SMTP. Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`, and `APP_URL`. In development without SMTP, the reset link is printed to the API console; production requires SMTP.
 
-The API stores only a SHA-256 hash of each reset token. Tokens expire after 30 minutes, are single use, and are invalidated when another reset is requested or a password is changed.
+The API stores only a SHA-256 hash of each reset token. Tokens expire after 30 minutes, are single use, and are invalidated when another reset is requested or a password is changed. The seeded manager and employee accounts must change their temporary password at first sign-in; admins can issue one-time credentials from the Access accounts screen.
 
 ## Scheduled work
 

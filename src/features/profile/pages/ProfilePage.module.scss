@@ -71,6 +71,22 @@
   font-style: italic;
 }
 
+.passwordRequired {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid #d97706;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #78350f;
+  font-weight: 600;
+}
+
+:global(html[data-theme='dark']) .passwordRequired {
+  border-color: #b45309;
+  background: #422006;
+  color: #fef3c7;
+}
+
 @media (max-width: 768px) {
   .title {
     margin-bottom: 16px;

@@ -7,12 +7,12 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await bcrypt.hash('password123', 10);
   const accounts = [
-    { id: 'usr-1', login: 'admin', email: 'admin@hotel.com', name: 'John Admin', role: 'ADMIN' },
-    { id: 'usr-2', login: 'manager', email: 'manager@hotel.com', name: 'Sarah Connor', role: 'MANAGER' },
-    { id: 'usr-3', login: 'employee', email: 'employee@hotel.com', name: 'Mike Wilson', role: 'EMPLOYEE' },
+    { id: 'usr-1', login: 'admin', email: 'admin@hotel.com', name: 'John Admin', role: 'ADMIN', mustChangePassword: false },
+    { id: 'usr-2', login: 'manager', email: 'manager@hotel.com', name: 'Sarah Connor', role: 'MANAGER', mustChangePassword: true },
+    { id: 'usr-3', login: 'employee', email: 'employee@hotel.com', name: 'Mike Wilson', role: 'EMPLOYEE', mustChangePassword: true },
   ];
   for (const account of accounts) {
-    await prisma.user.upsert({ where: { id: account.id }, update: {}, create: { ...account, passwordHash } });
+    await prisma.user.upsert({ where: { id: account.id }, update: { mustChangePassword: account.mustChangePassword }, create: { ...account, passwordHash } });
   }
 
   const employees = [

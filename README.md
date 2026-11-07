@@ -62,9 +62,15 @@ npm test
 
 ## Demo Access
 - `admin@hotel.com / password123`
-- `manager@hotel.com / password123`
-- `employee@hotel.com / password123`
+- Managers and employees must receive credentials from an administrator and change their temporary password at first sign-in.
 - Guest: click `Continue as Guest` on `/login`
+
+### Staff account provisioning
+- Sign in as the admin and open **Access accounts**.
+- Select an active employee without an account and issue a login. Give the one-time temporary password to them securely.
+- They sign in with their work email and issued password, then must set their own password before using the app.
+- Admins can issue a new temporary password if an employee forgets it. Existing temporary passwords are never displayed again.
+- In mock mode, accounts and passwords are stored in browser local storage. Use the backend for real credential storage; temporary passwords are returned once and are not emailed.
 
 ## Mock Mode
 - API calls are intercepted by MSW handlers in `src/mocks/handlers/*`.
@@ -92,3 +98,16 @@ Run the frontend and API separately using [backend/README.md](backend/README.md)
 2. `src/features/*/api/*.ts` - RTK Query endpoints per feature.
 3. `src/mocks/handlers/*` - mock implementation selected by `VITE_USE_MOCKS`.
 4. `backend/src/routes/*` - API routes.
+
+## Cloudflare Pages preparation
+
+The React/Vite frontend is ready to build as a Cloudflare Pages site:
+
+- Root directory: `/`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Production environment variable in the Pages project settings: `VITE_API_URL` set to the public API origin ending in `/api` (see `.env.production.example` for the expected format).
+
+These settings match Cloudflare's [Pages build configuration](https://developers.cloudflare.com/pages/configuration/build-configuration/). The build has no top-level `404.html`, so Pages' [SPA fallback](https://developers.cloudflare.com/pages/configuration/serving-pages/) serves client-side routes such as `/profile` on direct loads. Do not add a catch-all `_redirects` rule.
+
+Pages only hosts the frontend in this setup. The Express/Prisma API must be deployed separately and reachable over HTTPS. Configure its `CORS_ORIGIN` and `APP_URL` to the Pages domain, use a production database with persistent storage, set a strong `JWT_SECRET`, configure SMTP, and replace the seeded admin credential before accepting real users. The checked-in SQLite configuration is for local development and the API has not been ported to Cloudflare Workers. No Cloudflare deployment has been run.

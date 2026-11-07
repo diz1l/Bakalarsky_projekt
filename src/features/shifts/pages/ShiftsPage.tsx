@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useGetShiftsQuery, useCreateShiftMutation, useUpdateShiftMutation, useDeleteShiftMutation } from '../api/shiftsApi';
-import { useGetEmployeesQuery } from '@/features/employees/api/employeesApi';
+import { useGetCurrentEmployeeQuery, useGetEmployeesQuery, useGetScheduleRosterQuery } from '@/features/employees/api/employeesApi';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/Toast';
@@ -18,6 +18,7 @@ import { ScheduleGrid } from './ScheduleGrid';
 import { ShiftModal } from './ShiftModal';
 import { getShiftType } from '@/utils/shiftUtils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog';
+import { useCreateScheduleRequestMutation, useGetScheduleRequestsQuery, useReviewScheduleRequestMutation } from '../api/scheduleRequestsApi';
 
 const shiftSchema = z.object({
   employeeId: z.string().min(1, 'Employee is required'),
@@ -48,12 +49,19 @@ export function ShiftsPage() {
 
   const { data: shifts = [] } = useGetShiftsQuery({ weekStart, endDate });
   const { data: absences = [] } = useGetAbsencesQuery({ from: weekStart, to: endDate });
-  const { data: employees = [] } = useGetEmployeesQuery();
+  const canManageEmployees = can('employees.view');
+  const { data: managementEmployees = [] } = useGetEmployeesQuery(undefined, { skip: !canManageEmployees });
+  const { data: rosterEmployees = [] } = useGetScheduleRosterQuery(undefined, { skip: canManageEmployees });
+  const { data: linkedEmployee } = useGetCurrentEmployeeQuery(undefined, { skip: canManageEmployees });
+  const employees = canManageEmployees ? managementEmployees : rosterEmployees;
   const [createShift, { isLoading: creating }] = useCreateShiftMutation();
   const [updateShift, { isLoading: updating }] = useUpdateShiftMutation();
   const [deleteShift, { isLoading: deletingShift }] = useDeleteShiftMutation();
   const [saveAbsence] = useSaveAbsenceMutation();
   const [deleteAbsence] = useDeleteAbsenceMutation();
+  const { data: scheduleRequests = [] } = useGetScheduleRequestsQuery({ from: weekStart, to: endDate });
+  const [createScheduleRequest] = useCreateScheduleRequestMutation();
+  const [reviewScheduleRequest] = useReviewScheduleRequestMutation();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Shift | null>(null);
@@ -68,11 +76,9 @@ export function ShiftsPage() {
   const updateRoster = (next: string[]) => { setRoster(next); localStorage.setItem('staff-shift-roster', JSON.stringify(next)); };
   const activeEmployees = employees.filter((employee) => employee.status === 'active');
   const scheduledEmployeeIds = roster ?? activeEmployees.map((employee) => employee.id);
-  const currentEmployee = employees.find((employee) => employee.userId === user?.id);
+  const currentEmployee = canManageEmployees ? employees.find((employee) => employee.userId === user?.id) : linkedEmployee ?? undefined;
 
-  const visibleShifts = can('shifts.viewAll')
-    ? shifts
-    : shifts.filter((sh) => sh.employeeId === currentEmployee?.id);
+  const visibleShifts = can('shifts.viewAll') ? shifts : shifts.filter((sh) => sh.employeeId === currentEmployee?.id);
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<ShiftFormData>({
     resolver: zodResolver(shiftSchema),
@@ -116,9 +122,11 @@ export function ShiftsPage() {
     } else {
       const type = code === 'H' ? 'PAID_LEAVE' : code === 'S' ? 'SICK' : 'UNAVAILABLE';
       try {
-        await saveAbsence({ employeeId: statusTarget.employeeId, date: statusTarget.date, type }).unwrap();
+        if (can('shifts.create')) await saveAbsence({ employeeId: statusTarget.employeeId, date: statusTarget.date, type }).unwrap();
+        else await createScheduleRequest({ date: statusTarget.date, type }).unwrap();
+        showToast(can('shifts.create') ? 'Schedule updated' : 'Request sent to your manager', 'success');
       } catch {
-        showToast('Unable to save absence', 'error');
+        showToast(can('shifts.create') ? 'Unable to save absence' : 'Unable to send request', 'error');
       }
     }
   };
@@ -171,23 +179,34 @@ export function ShiftsPage() {
         </div>
       </div>
 
-      <div className={s.rosterTools}>{can('shifts.viewAll') && <><span>{activeEmployees.filter((employee) => scheduledEmployeeIds.includes(employee.id)).length} {t('people on schedule')}</span><Button variant="secondary" size="sm" onClick={() => setShowAddEmployee(true)}>+ {t('Add employee')}</Button></>}</div>
+      <div className={s.rosterTools}>{can('shifts.create') && <><span>{activeEmployees.filter((employee) => scheduledEmployeeIds.includes(employee.id)).length} {t('people on schedule')}</span><Button variant="secondary" size="sm" onClick={() => setShowAddEmployee(true)}>+ {t('Add employee')}</Button></>}</div>
       <ScheduleGrid
-        employees={employees.filter((employee) => employee.status === 'active' && (can('shifts.viewAll') ? scheduledEmployeeIds.includes(employee.id) : employee.id === currentEmployee?.id))}
+        employees={employees.filter((employee) => employee.status === 'active' && (can('shifts.create') ? scheduledEmployeeIds.includes(employee.id) : true))}
         dates={monthDates} shifts={visibleShifts} absences={absences}
-        canCreate={can('shifts.create')} canEdit={can('shifts.edit')} canDelete={can('shifts.delete')} canManageRoster={can('shifts.viewAll')}
+        canCreate={can('shifts.create')} canEdit={can('shifts.edit')} canDelete={can('shifts.delete')} canManageRoster={can('shifts.create')}
+        requestEmployeeId={user?.role === 'EMPLOYEE' ? currentEmployee?.id : undefined}
         onEdit={openEdit}
         onPickStatus={(employee, date) => { setStatusTarget({ employeeId: employee.id, date }); setStatusModalOpen(true); }}
         onDeleteShift={setShiftToDelete}
         onClearAbsence={(employeeId, date) => { void clearAbsence(employeeId, date); }}
         onRemoveEmployee={(employeeId) => updateRoster(scheduledEmployeeIds.filter((id) => id !== employeeId))}
       />
+      {scheduleRequests.length > 0 && <section className={s.requestsPanel}>
+        <h2>{can('shifts.create') ? t('Schedule requests') : t('My schedule requests')}</h2>
+        <div className={s.requestList}>{scheduleRequests.map((request) => <article key={request.id} className={s.requestItem}>
+          <div><strong>{can('shifts.create') ? request.employeeName : t(request.type === 'PAID_LEAVE' ? 'Paid leave' : request.type === 'SICK' ? 'Sick' : 'Unavailable')}</strong><span>{request.date} · {t(request.type === 'PAID_LEAVE' ? 'Paid leave' : request.type === 'SICK' ? 'Sick' : 'Unavailable')}</span></div>
+          <span className={`${s.requestStatus} ${s[`request${request.status}`]}`}>{t(request.status === 'PENDING' ? 'Pending approval' : request.status === 'APPROVED' ? 'Approved' : 'Rejected')}</span>
+          {can('shifts.create') && request.status === 'PENDING' && <div className={s.requestActions}><Button size="sm" onClick={() => void reviewScheduleRequest({ id: request.id, decision: 'APPROVED' })}>{t('Approve')}</Button><Button size="sm" variant="secondary" onClick={() => void reviewScheduleRequest({ id: request.id, decision: 'REJECTED' })}>{t('Reject')}</Button></div>}
+        </article>)}</div>
+      </section>}
 
       <ShiftModal isOpen={modalOpen} editing={editing} employeeName={employees.find((employee) => employee.id === assignedEmployeeId)?.firstName ? `${employees.find((employee) => employee.id === assignedEmployeeId)?.firstName} ${employees.find((employee) => employee.id === assignedEmployeeId)?.lastName}` : ''} shiftType={shiftType} setShiftType={setShiftType} register={register} errors={errors} onSubmit={handleSubmit(onSubmit)} onChange={checkConflict} onClose={() => setModalOpen(false)} conflict={conflict} loading={creating || updating} canDelete={can('shifts.delete')} onDelete={() => { if (editing) { setShiftToDelete(editing.id); setModalOpen(false); } }} />
-      <Modal isOpen={statusModalOpen} onClose={() => setStatusModalOpen(false)} title={t('Choose schedule entry')}>
+      <Modal isOpen={statusModalOpen} onClose={() => setStatusModalOpen(false)} title={t(user?.role === 'EMPLOYEE' ? 'Request absence' : 'Choose schedule entry')}>
+        {user?.role === 'EMPLOYEE' && <p className={s.addDescription}>{t('Choose a day off or sick request. A manager must approve it before it appears on the schedule.')}</p>}
+        {can('shifts.create') && statusTarget && absences.some((absence) => absence.employeeId === statusTarget.employeeId && absence.date === statusTarget.date) && <Button variant="secondary" onClick={() => { void clearAbsence(statusTarget.employeeId, statusTarget.date); setStatusModalOpen(false); }}>{t('Clear absence')}</Button>}
         <div className={s.statusChoices}>
-          <button className={s.codeD} onClick={() => chooseStatus('D')}><b>D</b><span>{t('Day shift')}</span></button>
-          <button className={s.codeN} onClick={() => chooseStatus('N')}><b>N</b><span>{t('Night shift')}</span></button>
+          {user?.role !== 'EMPLOYEE' && <><button className={s.codeD} onClick={() => chooseStatus('D')}><b>D</b><span>{t('Day shift')}</span></button>
+          <button className={s.codeN} onClick={() => chooseStatus('N')}><b>N</b><span>{t('Night shift')}</span></button></>}
           <button className={s.codeH} onClick={() => chooseStatus('H')}><b>H</b><span>{t('Paid leave')}</span></button>
           <button className={s.codeS} onClick={() => chooseStatus('S')}><b>S</b><span>{t('Sick')}</span></button>
           <button className={s.codeX} onClick={() => chooseStatus('×')}><b>×</b><span>{t('Unavailable')}</span></button>

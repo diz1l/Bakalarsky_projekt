@@ -1,0 +1,147 @@
+@use '../../../assets/scss/variables' as *;
+
+.header {
+  margin-bottom: 20px;
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  p,
+  .muted,
+  .note {
+    color: $text-secondary;
+    font-size: 0.875rem;
+  }
+}
+
+.panel {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  background: $bg-surface;
+  box-shadow: $shadow-sm;
+
+  h2 {
+    margin-bottom: 16px;
+    font-size: 1.125rem;
+  }
+}
+
+.createForm {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(180px, 0.8fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.note {
+  margin-top: 12px;
+  color: $text-secondary;
+  font-size: 0.8125rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+
+  th,
+  td {
+    padding: 12px 10px;
+    border-bottom: 1px solid $border;
+    font-size: 0.8125rem;
+    vertical-align: middle;
+  }
+
+  th {
+    color: $text-secondary;
+    font-weight: 600;
+  }
+}
+
+.pending,
+.active {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.pending {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.active {
+  background: #dcfce7;
+  color: #14532d;
+}
+
+:global(html[data-theme='dark']) .pending {
+  background: #422006;
+  color: #fef3c7;
+}
+
+:global(html[data-theme='dark']) .active {
+  background: #052e16;
+  color: #bbf7d0;
+}
+
+.credentials {
+  display: grid;
+  gap: 16px;
+  line-height: 1.6;
+
+  dl {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  dt {
+    color: $text-secondary;
+    font-size: 0.75rem;
+  }
+
+  dd {
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+  }
+
+  code {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid $border;
+    border-radius: $radius;
+    background: $bg-main;
+    color: $text-primary;
+    user-select: all;
+  }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .createForm {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+}

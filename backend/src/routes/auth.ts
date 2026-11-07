@@ -10,8 +10,9 @@ import { sendPasswordResetEmail } from '../lib/email.js';
 
 export const authRouter = Router();
 
-const toUser = (user: { id: string; login: string; email: string; name: string; role: string }) => ({
+const toUser = (user: { id: string; login: string; email: string; name: string; role: string; mustChangePassword: boolean }) => ({
   id: user.id, login: user.login, email: user.email, name: user.name, role: user.role as Role,
+  mustChangePassword: user.mustChangePassword,
 });
 
 authRouter.post('/login', async (req, res) => {
@@ -60,7 +61,7 @@ authRouter.post('/reset-password', async (req, res) => {
     if (!resetToken || resetToken.usedAt || resetToken.expiresAt <= new Date()) throw new HttpError(400, 'Reset link is invalid or expired');
     const consumed = await transaction.passwordResetToken.deleteMany({ where: { id: resetToken.id, usedAt: null, expiresAt: { gt: new Date() } } });
     if (consumed.count !== 1) throw new HttpError(400, 'Reset link is invalid or expired');
-    await transaction.user.update({ where: { id: resetToken.userId }, data: { passwordHash } });
+    await transaction.user.update({ where: { id: resetToken.userId }, data: { passwordHash, mustChangePassword: false } });
     await transaction.passwordResetToken.deleteMany({ where: { userId: resetToken.userId } });
   });
   res.json({ message: 'Password updated' });
@@ -76,7 +77,93 @@ authRouter.post('/change-password', requireAuth, requirePermission('profile.edit
   const { oldPassword, newPassword } = z.object({ oldPassword: z.string(), newPassword: z.string().min(8) }).parse(req.body);
   const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
   if (!(await bcrypt.compare(oldPassword, user.passwordHash))) throw badRequest('Current password is incorrect');
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(newPassword, 10) } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await bcrypt.hash(newPassword, 10), mustChangePassword: false },
+  });
   await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
   res.json({ message: 'Password updated' });
+});
+
+const accountLoginSchema = z.object({
+  employeeId: z.string().min(1),
+  login: z.string().min(3).max(50).regex(/^[a-zA-Z0-9._-]+$/),
+});
+
+authRouter.get('/accounts', requireAuth, requirePermission('accounts.manage'), async (_req, res) => {
+  const users = await prisma.user.findMany({
+    where: { role: { in: ['ADMIN', 'MANAGER', 'EMPLOYEE'] } },
+    include: { employee: { select: { id: true, firstName: true, lastName: true } } },
+    orderBy: { name: 'asc' },
+  });
+  res.json(users.flatMap((user) => user.employee ? [{
+    id: user.id,
+    login: user.login,
+    email: user.email,
+    name: user.name,
+    role: user.role as Role,
+    mustChangePassword: user.mustChangePassword,
+    employeeId: user.employee.id,
+    employeeName: `${user.employee.firstName} ${user.employee.lastName}`,
+  }] : []));
+});
+
+authRouter.post('/accounts', requireAuth, requirePermission('accounts.manage'), async (req, res) => {
+  const { employeeId, login } = accountLoginSchema.parse(req.body);
+  const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+  if (!employee || employee.status !== 'active') throw badRequest('Active employee not found');
+  if (employee.userId) throw badRequest('Employee already has an account');
+
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ login }, { email: employee.email }] },
+    select: { id: true },
+  });
+  if (existing) throw badRequest('Login or employee email is already in use');
+
+  const temporaryPassword = `Temp-${randomBytes(9).toString('base64url')}`;
+  const passwordHash = await bcrypt.hash(temporaryPassword, 10);
+  const user = await prisma.$transaction(async (transaction) => {
+    const created = await transaction.user.create({
+      data: {
+        login,
+        email: employee.email,
+        name: `${employee.firstName} ${employee.lastName}`,
+        role: employee.role,
+        passwordHash,
+        mustChangePassword: true,
+        employee: { connect: { id: employee.id } },
+      },
+    });
+    return created;
+  });
+
+  res.status(201).json({
+    account: {
+      id: user.id,
+      login: user.login,
+      email: user.email,
+      name: user.name,
+      role: user.role as Role,
+      mustChangePassword: user.mustChangePassword,
+      employeeId: employee.id,
+      employeeName: `${employee.firstName} ${employee.lastName}`,
+    },
+    temporaryPassword,
+  });
+});
+
+authRouter.post('/accounts/:userId/reset-password', requireAuth, requirePermission('accounts.manage'), async (req, res) => {
+  const userId = z.string().min(1).parse(req.params.userId);
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role === 'ADMIN') throw new HttpError(404, 'Account not found');
+
+  const temporaryPassword = `Temp-${randomBytes(9).toString('base64url')}`;
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await bcrypt.hash(temporaryPassword, 10), mustChangePassword: true },
+    }),
+    prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+  ]);
+  res.json({ temporaryPassword });
 });

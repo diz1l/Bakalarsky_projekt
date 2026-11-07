@@ -67,6 +67,12 @@ const navItems: NavItem[] = [
     permission: 'profile.view',
     icon: <Icon d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 7a4 4 0 100-8 4 4 0 000 8" />,
   },
+  {
+    path: '/accounts',
+    label: 'Access accounts',
+    permission: 'accounts.manage',
+    icon: <Icon d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m6-10a4 4 0 100-8 4 4 0 000 8m7-3h6m-3-3v6" />,
+  },
 ];
 
 export function Sidebar({ collapsed, mobileOpen, onToggle, onNavigate }: { collapsed: boolean; mobileOpen: boolean; onToggle: () => void; onNavigate: () => void }) {

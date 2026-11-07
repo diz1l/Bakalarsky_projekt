@@ -1,9 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
+const baseUrl = import.meta.env.VITE_API_URL
+  ?? (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
+    baseUrl,
     fetchFn: (input, init) => {
       if (!init) return fetch(input);
       const requestInit: RequestInit = { ...init };
@@ -18,6 +21,6 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Employee', 'Shift', 'Absence', 'Notification', 'Announcement', 'User', 'Task', 'TaskTemplate', 'Handover'],
+  tagTypes: ['Employee', 'Shift', 'Absence', 'ScheduleRequest', 'Notification', 'Announcement', 'User', 'Task', 'TaskTemplate', 'Handover'],
   endpoints: () => ({}),
 });

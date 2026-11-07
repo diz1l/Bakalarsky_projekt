@@ -24,6 +24,23 @@ employeesRouter.get('/', requirePermission('employees.view'), async (_req, res) 
   res.json(await prisma.employee.findMany({ orderBy: { lastName: 'asc' } }));
 });
 
+employeesRouter.get('/roster', requirePermission('shifts.viewAll'), async (_req, res) => {
+  const employees = await prisma.employee.findMany({
+    where: { status: 'active' },
+    select: { id: true, firstName: true, lastName: true, department: true, status: true },
+    orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  });
+  res.json(employees);
+});
+
+employeesRouter.get('/me', requirePermission('shifts.view'), async (req, res) => {
+  const employee = await prisma.employee.findUnique({
+    where: { userId: req.user!.id },
+    select: { id: true, userId: true, firstName: true, lastName: true, department: true, status: true },
+  });
+  res.json(employee);
+});
+
 employeesRouter.get('/:id', requirePermission('employees.view'), async (req, res) => {
   const employee = await prisma.employee.findUnique({ where: { id: idParam(req) } });
   if (!employee) throw notFound();

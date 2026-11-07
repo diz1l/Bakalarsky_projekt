@@ -73,6 +73,7 @@ export function ProfilePage() {
   const onSubmitPassword = async (data: ChangePasswordFormData) => {
     try {
       await changePassword({ oldPassword: data.oldPassword, newPassword: data.newPassword }).unwrap();
+      dispatch(patchSessionUser({ mustChangePassword: false }));
       passwordForm.reset({ oldPassword: '', newPassword: '', confirmPassword: '' });
       showToast(t('Password updated successfully'), 'success');
     } catch {
@@ -83,6 +84,12 @@ export function ProfilePage() {
   return (
     <div>
       <h1 className={s.title}>{t('Profile')}</h1>
+
+      {user.mustChangePassword && (
+        <div className={s.passwordRequired} role="alert">
+          You are using a temporary password. Set a new password to continue.
+        </div>
+      )}
 
       <div className={s.card}>
         <div className={s.avatar}>{user.name.charAt(0).toUpperCase()}</div>
@@ -97,7 +104,7 @@ export function ProfilePage() {
       </div>
 
       <div className={s.formsGrid}>
-        <section className={s.panel}>
+        {!user.mustChangePassword && <section className={s.panel}>
           <h3>{t('Profile info')}</h3>
           <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
             <FormField label={t('Full name')} error={profileForm.formState.errors.name?.message} required>
@@ -129,7 +136,7 @@ export function ProfilePage() {
               </Button>
             </div>
           </form>
-        </section>
+        </section>}
 
         <section className={s.panel}>
           <h3>{t('Change password')}</h3>

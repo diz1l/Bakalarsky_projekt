@@ -1,4 +1,5 @@
-import type { Absence, Announcement, Employee, HandoverNote, Notification, Shift, ShiftTask, TaskTemplate } from '@/types';
+import type { Absence, Announcement, Employee, HandoverNote, Notification, ScheduleRequest, Shift, ShiftTask, TaskTemplate } from '@/types';
+import type { MockUser } from './db';
 
 const MOCK_STATE_KEY = 'staff_manager_mock_state_v1';
 
@@ -8,9 +9,11 @@ export interface MockPersistedState {
   notifications: Notification[];
   announcements: Announcement[];
   absences: Absence[];
+  scheduleRequests: ScheduleRequest[];
   taskTemplates: TaskTemplate[];
   tasks: ShiftTask[];
   handoverNotes: HandoverNote[];
+  users: MockUser[];
 }
 
 function canUseStorage() {

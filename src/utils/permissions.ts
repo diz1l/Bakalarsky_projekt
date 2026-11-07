@@ -18,6 +18,7 @@ export type Permission =
   | 'profile.view'
   | 'profile.edit'
   | 'dashboard.view'
+  | 'accounts.manage'
   | 'tasks.view'
   | 'tasks.create'
   | 'tasks.complete'
@@ -47,6 +48,7 @@ const rolePermissions: Record<Role, Permission[]> = {
     'profile.view',
     'profile.edit',
     'dashboard.view',
+    'accounts.manage',
     'tasks.view',
     'tasks.create',
     'tasks.complete',
@@ -85,6 +87,7 @@ const rolePermissions: Record<Role, Permission[]> = {
   ],
   EMPLOYEE: [
     'shifts.view',
+    'shifts.viewAll',
     'notifications.view',
     'notifications.manage',
     'announcements.view',

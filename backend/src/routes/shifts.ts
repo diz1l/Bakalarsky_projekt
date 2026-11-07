@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
-import { badRequest, idParam } from '../lib/http.js';
+import { badRequest, forbidden, idParam } from '../lib/http.js';
 import { notifyEmployee, notifyRoles } from '../lib/notify.js';
 import { addDays, shiftTypeFromTime } from '../lib/shiftSlots.js';
 import { can, requirePermission } from '../middleware/auth.js';
@@ -52,7 +52,10 @@ shiftsRouter.get('/', requirePermission('shifts.view'), async (req, res) => {
   const where: Record<string, unknown> = weekStart ? { date: { gte: weekStart, lt: endDate ?? addDays(weekStart, 7) } } : {};
   if (!can(req, 'shifts.viewAll')) where.employee = { userId: req.user!.id };
   const shifts = await prisma.shift.findMany({ where, include: { employee: true }, orderBy: [{ date: 'asc' }, { startTime: 'asc' }] });
-  res.json(shifts.map(withName));
+  res.json(shifts.map((shift) => {
+    const result = withName(shift);
+    return can(req, 'shifts.create') ? result : { ...result, notes: undefined };
+  }));
 });
 
 shiftsRouter.post('/', requirePermission('shifts.create'), async (req, res) => {
@@ -97,9 +100,48 @@ shiftsRouter.delete('/:id', requirePermission('shifts.delete'), async (req, res)
 
 export const absencesRouter = Router();
 
+export const scheduleRequestsRouter = Router();
+const requestSchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), type: z.enum(['PAID_LEAVE', 'SICK', 'UNAVAILABLE']) });
+
+scheduleRequestsRouter.get('/', requirePermission('shifts.view'), async (req, res) => {
+  const { from, to } = z.object({ from: z.string(), to: z.string() }).parse(req.query);
+  const where = { date: { gte: from, lt: to }, ...(!can(req, 'shifts.create') ? { employee: { userId: req.user!.id } } : {}) };
+  const requests = await prisma.scheduleRequest.findMany({ where, include: { employee: { select: { firstName: true, lastName: true, department: true } } }, orderBy: [{ date: 'asc' }, { createdAt: 'desc' }] });
+  res.json(requests.map(({ employee, ...request }) => ({ ...request, employeeName: `${employee.firstName} ${employee.lastName}`, department: employee.department })));
+});
+
+scheduleRequestsRouter.post('/', requirePermission('shifts.view'), async (req, res) => {
+  if (can(req, 'shifts.create')) throw forbidden('Managers must update the schedule directly.');
+  const data = requestSchema.parse(req.body);
+  const employee = await prisma.employee.findUnique({ where: { userId: req.user!.id } });
+  if (!employee) throw badRequest('No employee profile is linked to this account.');
+  const request = await prisma.scheduleRequest.upsert({
+    where: { employeeId_date: { employeeId: employee.id, date: data.date } },
+    create: { ...data, employeeId: employee.id },
+    update: { ...data, status: 'PENDING', reviewedAt: null, reviewedBy: null },
+    include: { employee: { select: { firstName: true, lastName: true, department: true } } },
+  });
+  await notifyRoles(['ADMIN', 'MANAGER'], { title: 'Schedule request', message: `${employee.firstName} ${employee.lastName} requested a schedule change on ${data.date}.`, type: 'info', relatedType: 'shift', relatedId: request.id }, req.user!.id);
+  res.status(201).json({ ...request, employeeName: `${employee.firstName} ${employee.lastName}`, department: employee.department });
+});
+
+scheduleRequestsRouter.put('/:id/review', requirePermission('shifts.create'), async (req, res) => {
+  const { decision } = z.object({ decision: z.enum(['APPROVED', 'REJECTED']) }).parse(req.body);
+  const request = await prisma.scheduleRequest.findUnique({ where: { id: idParam(req) }, include: { employee: true } });
+  if (!request) throw badRequest('Schedule request not found.');
+  if (request.status !== 'PENDING') throw badRequest('Schedule request has already been reviewed.');
+  if (decision === 'APPROVED') {
+    await prisma.shift.deleteMany({ where: { employeeId: request.employeeId, date: request.date } });
+    await prisma.absence.upsert({ where: { employeeId_date: { employeeId: request.employeeId, date: request.date } }, create: { employeeId: request.employeeId, date: request.date, type: request.type }, update: { type: request.type } });
+  }
+  const updated = await prisma.scheduleRequest.update({ where: { id: request.id }, data: { status: decision, reviewedAt: new Date(), reviewedBy: req.user!.id } });
+  await notifyEmployee(request.employeeId, { title: `Schedule request ${decision.toLowerCase()}`, message: `Your request for ${request.date} was ${decision.toLowerCase()}.`, type: decision === 'APPROVED' ? 'success' : 'warning', relatedType: 'shift', relatedId: request.id }, req.user!.id);
+  res.json(updated);
+});
+
 absencesRouter.get('/', requirePermission('shifts.view'), async (req, res) => {
   const { from, to } = z.object({ from: z.string(), to: z.string() }).parse(req.query);
-  res.json(await prisma.absence.findMany({ where: { date: { gte: from, lt: to } } }));
+  res.json(await prisma.absence.findMany({ where: { date: { gte: from, lt: to } }, select: { id: true, employeeId: true, date: true, type: true } }));
 });
 
 absencesRouter.put('/', requirePermission('shifts.create'), async (req, res) => {

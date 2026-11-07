@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useGuestLoginMutation, useLoginMutation } from '../api/authApi';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { setCredentials } from '../slices/authSlice';
+import { useEffect } from 'react';
 import { loginSchema } from '../schemas/loginSchema';
 import type { LoginFormData } from '../schemas/loginSchema';
 import { FormField } from '@/components/ui/FormField/FormField';
@@ -13,6 +14,10 @@ import { useToast } from '@/components/ui/Toast';
 import s from './LoginPage.module.scss';
 
 export function LoginPage() {
+  useEffect(() => {
+    document.documentElement.dataset.theme = localStorage.getItem('staff-theme') === 'dark' ? 'dark' : 'light';
+  }, []);
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -39,7 +44,7 @@ export function LoginPage() {
     if (!res) return;
 
     dispatch(setCredentials(res));
-    navigate('/dashboard');
+    navigate(res.user.mustChangePassword ? '/profile?forcePasswordChange=true' : '/dashboard');
   };
 
   const onGuestSubmit = async () => {
@@ -64,7 +69,7 @@ export function LoginPage() {
           <FormField label="Email" error={errors.email?.message} required>
             <Input
               type="email"
-              placeholder="admin@hotel.com"
+              placeholder="name@hotel.com"
               autoComplete="email"
               error={!!errors.email}
               {...register('email')}
@@ -74,7 +79,7 @@ export function LoginPage() {
           <FormField label="Password" error={errors.password?.message} required>
             <Input
               type="password"
-              placeholder="password123"
+              placeholder="Enter your password"
               autoComplete="current-password"
               error={!!errors.password}
               {...register('password')}
@@ -104,14 +109,6 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <div className={s.hint}>
-          <p>
-            <strong>Demo accounts:</strong>
-          </p>
-          <p>admin@hotel.com / password123</p>
-          <p>manager@hotel.com / password123</p>
-          <p>employee@hotel.com / password123</p>
-        </div>
       </div>
     </div>
   );

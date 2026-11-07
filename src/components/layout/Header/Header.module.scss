@@ -34,6 +34,12 @@
   white-space: nowrap;
 }
 
+.right button:last-child { color: $text-secondary; }
+
+:global(html[data-theme='dark']) .menu,
+:global(html[data-theme='dark']) .theme,
+:global(html[data-theme='dark']) .name { color: #cbd5e1; }
+
 @media (max-width: 992px) {
   .header {
     padding: 0 16px;

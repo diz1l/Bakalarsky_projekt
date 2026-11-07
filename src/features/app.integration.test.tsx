@@ -3,15 +3,47 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 import App from '@/App';
 import { renderAtRoute } from '@/test/render';
+import { toDateString } from '@/utils/dateUtils';
 
 async function signInAsAdmin(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByPlaceholderText('admin@hotel.com'), 'admin@hotel.com');
-  await user.type(screen.getByPlaceholderText('password123'), 'password123');
+  await user.type(screen.getByPlaceholderText('name@hotel.com'), 'admin@hotel.com');
+  await user.type(screen.getByPlaceholderText('Enter your password'), 'password123');
   await user.click(screen.getByRole('button', { name: 'Sign in' }));
   await screen.findByText(/Welcome back, John Admin/i);
 }
 
+async function signIn(user: ReturnType<typeof userEvent.setup>, email: string) {
+  await user.type(screen.getByPlaceholderText('name@hotel.com'), email);
+  await user.type(screen.getByPlaceholderText('Enter your password'), 'password123');
+  await user.click(screen.getByRole('button', { name: 'Sign in' }));
+  await waitFor(() => {
+    expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}').email).toBe(email);
+  });
+  if (JSON.parse(localStorage.getItem('auth_user') ?? '{}').mustChangePassword) {
+    await screen.findByRole('alert');
+    await user.type(screen.getByPlaceholderText('Current password'), 'password123');
+    await user.type(screen.getByPlaceholderText('New password'), 'team-member-new-password');
+    await user.type(screen.getByPlaceholderText('Confirm new password'), 'team-member-new-password');
+    await user.click(screen.getByRole('button', { name: 'Update password' }));
+    await screen.findByText('Password updated successfully');
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}').mustChangePassword).toBe(false);
+    });
+  }
+  await screen.findByRole('button', { name: 'Sign out' });
+}
+
 describe('App flows (mock mode)', () => {
+  test('Login page does not disclose demo credentials', () => {
+    renderAtRoute(<App />, '/login');
+
+    expect(screen.queryByText(/Demo accounts/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/manager@hotel\.com\s*\/\s*password123/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/employee@hotel\.com\s*\/\s*password123/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('name@hotel.com')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
+  });
+
   test('Guest login should navigate to dashboard and store GUEST role', async () => {
     const user = userEvent.setup();
     renderAtRoute(<App />, '/login');
@@ -48,6 +80,36 @@ describe('App flows (mock mode)', () => {
     expect(await screen.findByRole('heading', { name: 'Announcements' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'New Announcement' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  test('Employees can see all colleagues and request an absence for manager review', async () => {
+    const user = userEvent.setup();
+    renderAtRoute(<App />, '/login');
+    await signIn(user, 'employee@hotel.com');
+    await user.click(screen.getByRole('link', { name: 'Shifts' }));
+    await screen.findByRole('heading', { name: 'Shift schedule' });
+
+    const lisa = (await screen.findAllByText('Lisa Chen')).find((element) => element.closest('tr'))?.closest('tr');
+    expect(lisa).toBeInTheDocument();
+    const today = toDateString(new Date());
+    const mikeName = screen.getAllByText('Mike Wilson').find((element) => {
+      const container = element.closest('article') ?? element.closest('tr');
+      return !!container?.querySelector(`button[data-date="${today}"]`);
+    });
+    const mike = mikeName?.closest('article') ?? mikeName?.closest('tr');
+    expect(mike).toBeInTheDocument();
+    const requestButton = mike?.querySelector(`button[data-date="${today}"]`);
+    expect(requestButton).toBeEnabled();
+    await user.click(requestButton!);
+    await user.click(screen.getByRole('button', { name: /Sick/ }));
+    expect(await screen.findByText('Pending approval')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    await signIn(user, 'manager@hotel.com');
+    await user.click(screen.getByRole('link', { name: 'Shifts' }));
+    await screen.findByRole('heading', { name: 'Schedule requests' });
+    await user.click(await screen.findByRole('button', { name: 'Approve' }));
+    expect(await screen.findByText('Approved')).toBeInTheDocument();
   });
 
   test('Forgot password should show success and mock reset link', async () => {
@@ -169,5 +231,38 @@ describe('App flows (mock mode)', () => {
     await user.click(screen.getByRole('button', { name: 'Update password' }));
 
     expect(await screen.findByText('Password updated successfully')).toBeInTheDocument();
+  });
+
+  test('Admin issues an account and employee must change its temporary password', async () => {
+    const user = userEvent.setup();
+    renderAtRoute(<App />, '/login');
+    await signInAsAdmin(user);
+
+    await user.click(screen.getByRole('link', { name: 'Access accounts' }));
+    await screen.findByRole('heading', { name: 'Access accounts' });
+    await user.selectOptions(await screen.findByLabelText(/Employee/), 'emp-4');
+    await user.type(screen.getByLabelText(/Login/), 'lisa.chen');
+    await user.click(screen.getByRole('button', { name: 'Create credentials' }));
+
+    const temporaryPassword = (await screen.findByTestId('issued-password')).textContent ?? '';
+    expect(temporaryPassword).toMatch(/^Temp-/);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+
+    await user.type(screen.getByPlaceholderText('name@hotel.com'), 'lisa@hotel.com');
+    await user.type(screen.getByPlaceholderText('Enter your password'), temporaryPassword);
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/temporary password/i);
+    expect(screen.queryByRole('heading', { name: 'Profile info' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Shifts' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/temporary password/i);
+
+    await user.type(screen.getByPlaceholderText('Current password'), temporaryPassword);
+    await user.type(screen.getByPlaceholderText('New password'), 'lisa-new-password');
+    await user.type(screen.getByPlaceholderText('Confirm new password'), 'lisa-new-password');
+    await user.click(screen.getByRole('button', { name: 'Update password' }));
+    expect(await screen.findByText('Password updated successfully')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('auth_user') ?? '{}').mustChangePassword).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import type {
   ForgotPasswordResponse,
   LoginRequest,
   LoginResponse,
+  ManagedAccount,
   ResetPasswordRequest,
   UpdateProfileRequest,
   User,
@@ -35,6 +36,21 @@ export const authApi = baseApi.injectEndpoints({
       query: () => '/auth/me',
       providesTags: ['User'],
     }),
+    getManagedAccounts: builder.query<ManagedAccount[], void>({
+      query: () => '/auth/accounts',
+      providesTags: ['User'],
+    }),
+    createManagedAccount: builder.mutation<
+      { account: ManagedAccount; temporaryPassword: string },
+      { employeeId: string; login: string }
+    >({
+      query: (body) => ({ url: '/auth/accounts', method: 'POST', body }),
+      invalidatesTags: ['User', 'Employee'],
+    }),
+    resetManagedAccountPassword: builder.mutation<{ temporaryPassword: string }, string>({
+      query: (userId) => ({ url: `/auth/accounts/${userId}/reset-password`, method: 'POST' }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
@@ -46,4 +62,7 @@ export const {
   useUpdateProfileMutation,
   useChangePasswordMutation,
   useGetMeQuery,
+  useGetManagedAccountsQuery,
+  useCreateManagedAccountMutation,
+  useResetManagedAccountPasswordMutation,
 } = authApi;

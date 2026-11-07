@@ -17,6 +17,7 @@ model User {
   name         String
   role         String // ADMIN | MANAGER | EMPLOYEE
   passwordHash String
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime @default(now())
 
   employee      Employee?
@@ -52,6 +53,7 @@ model Employee {
 
   shifts   Shift[]
   absences Absence[]
+  scheduleRequests ScheduleRequest[]
 }
 
 model Shift {
@@ -78,6 +80,21 @@ model Absence {
   note       String?
 
   @@unique([employeeId, date])
+}
+
+model ScheduleRequest {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date       String
+  type       String // PAID_LEAVE | SICK | UNAVAILABLE
+  status     String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  createdAt  DateTime @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+
+  @@unique([employeeId, date])
+  @@index([date, status])
 }
 
 model Notification {

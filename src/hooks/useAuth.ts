@@ -1,5 +1,6 @@
 import { useAppSelector, useAppDispatch } from '@/app/hooks';
 import { logout } from '@/features/auth/slices/authSlice';
+import { baseApi } from '@/app/baseApi';
 import { useCallback } from 'react';
 
 export function useAuth() {
@@ -8,6 +9,7 @@ export function useAuth() {
 
   const handleLogout = useCallback(() => {
     dispatch(logout());
+    dispatch(baseApi.util.resetApiState());
   }, [dispatch]);
 
   return {

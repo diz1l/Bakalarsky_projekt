@@ -1,0 +1,216 @@
+@use '../../../assets/scss/variables' as *;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+
+  h1 { font-size: 1.55rem; letter-spacing: -0.03em; }
+}
+
+.subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  margin-top: 3px;
+}
+
+.nowBadge {
+  padding: 1px 8px;
+  border-radius: $radius-full;
+  background: rgba($success, 0.14);
+  color: #047857;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.slotNav { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid $border;
+  margin-bottom: 18px;
+}
+
+.tab {
+  padding: 8px 14px;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+
+  &:hover { color: $text-primary; }
+}
+
+.activeTab { color: $primary; border-bottom-color: $primary; }
+
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summaryActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  select { min-width: 170px; }
+}
+
+.progressWrap { flex: 1; min-width: 220px; max-width: 420px; }
+
+.progressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: $text-secondary;
+  margin-bottom: 6px;
+
+  strong { color: $text-primary; }
+}
+
+.progress {
+  height: 8px;
+  border-radius: $radius-full;
+  background: $border;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, $primary, $success);
+    transition: width 0.3s ease;
+  }
+}
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  transition: $transition;
+
+  &:hover { border-color: rgba($primary, 0.35); }
+}
+
+.taskDone { opacity: 0.65; }
+.taskDone .taskTitle { text-decoration: line-through; }
+.taskSkipped .taskTitle { text-decoration-color: $warning; }
+
+.check {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 1px;
+
+  input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+
+    &:disabled { cursor: not-allowed; }
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid $text-light;
+    border-radius: 6px;
+    transition: $transition;
+  }
+
+  input:checked + span {
+    background: $success;
+    border-color: $success;
+
+    &::after { content: '✓'; color: #fff; font-size: 0.8rem; font-weight: 700; }
+  }
+
+  input:focus-visible + span { box-shadow: 0 0 0 3px rgba($primary, 0.25); }
+}
+
+.taskBody { flex: 1; min-width: 0; }
+.taskTitle { font-weight: 600; font-size: 0.925rem; }
+
+.taskDescription {
+  margin-top: 3px;
+  color: $text-secondary;
+  font-size: 0.84rem;
+  white-space: pre-line;
+}
+
+.taskMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 7px;
+  color: $text-secondary;
+  font-size: 0.78rem;
+}
+
+.overdue { color: $danger; font-weight: 600; }
+
+.completedInfo {
+  margin-top: 6px;
+  color: $text-secondary;
+  font-size: 0.78rem;
+}
+
+.taskActions { display: flex; gap: 2px; flex-shrink: 0; }
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.formActions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 8px; }
+
+.modalText { color: $text-secondary; font-size: 0.875rem; margin-bottom: 12px; }
+
+.weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 9px;
+    border: 1px solid $border;
+    border-radius: $radius;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+}
+
+:global(html[data-theme='dark']) {
+  .task { background: #111827; border-color: #263244; }
+  .progress { background: #263244; }
+}

@@ -18,6 +18,6 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Employee', 'Shift', 'Notification', 'Announcement', 'User'],
+  tagTypes: ['Employee', 'Shift', 'Absence', 'Notification', 'Announcement', 'User', 'Task', 'TaskTemplate', 'Handover'],
   endpoints: () => ({}),
 });

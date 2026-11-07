@@ -1,4 +1,4 @@
-﻿import type { Role } from '@/types';
+import type { Role } from '@/types';
 
 export type Permission =
   | 'employees.view'
@@ -17,7 +17,16 @@ export type Permission =
   | 'announcements.manage'
   | 'profile.view'
   | 'profile.edit'
-  | 'dashboard.view';
+  | 'dashboard.view'
+  | 'tasks.view'
+  | 'tasks.create'
+  | 'tasks.complete'
+  | 'tasks.manageTemplates'
+  | 'tasks.manage'
+  | 'handover.view'
+  | 'handover.create'
+  | 'handover.acknowledge'
+  | 'handover.manage';
 
 const rolePermissions: Record<Role, Permission[]> = {
   ADMIN: [
@@ -38,6 +47,15 @@ const rolePermissions: Record<Role, Permission[]> = {
     'profile.view',
     'profile.edit',
     'dashboard.view',
+    'tasks.view',
+    'tasks.create',
+    'tasks.complete',
+    'tasks.manageTemplates',
+    'tasks.manage',
+    'handover.view',
+    'handover.create',
+    'handover.acknowledge',
+    'handover.manage',
   ],
   MANAGER: [
     'employees.view',
@@ -55,6 +73,15 @@ const rolePermissions: Record<Role, Permission[]> = {
     'profile.view',
     'profile.edit',
     'dashboard.view',
+    'tasks.view',
+    'tasks.create',
+    'tasks.complete',
+    'tasks.manageTemplates',
+    'tasks.manage',
+    'handover.view',
+    'handover.create',
+    'handover.acknowledge',
+    'handover.manage',
   ],
   EMPLOYEE: [
     'shifts.view',
@@ -64,9 +91,17 @@ const rolePermissions: Record<Role, Permission[]> = {
     'profile.view',
     'profile.edit',
     'dashboard.view',
+    'tasks.view',
+    'tasks.create',
+    'tasks.complete',
+    'handover.view',
+    'handover.create',
+    'handover.acknowledge',
   ],
   GUEST: [
     'dashboard.view',
+    'tasks.view',
+    'handover.view',
     'shifts.view',
     'shifts.viewAll',
     'notifications.view',

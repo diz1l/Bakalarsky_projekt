@@ -13,6 +13,8 @@
   min-width: 0;
 }
 
+.collapsed .main { margin-left: 76px; }
+
 .content {
   flex: 1;
   padding: 24px 32px;
@@ -27,6 +29,7 @@
   .main {
     margin-left: 0;
   }
+  .collapsed .main { margin-left: 0; }
 
   .content {
     padding: 16px;

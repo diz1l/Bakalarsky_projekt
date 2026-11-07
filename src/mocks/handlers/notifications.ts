@@ -1,12 +1,6 @@
-﻿import { delay, http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { db, persistMockCollections } from '../data/db';
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
-
-function getUserIdFromAuthHeader(authHeader: string | null): string | null {
-  if (!authHeader) return null;
-  return authHeader.replace('Bearer mock-jwt-', '');
-}
+import { API, getUserIdFromAuthHeader } from './utils';
 
 export const notificationsHandlers = [
   http.get(`${API}/notifications`, async ({ request }) => {
@@ -17,7 +11,27 @@ export const notificationsHandlers = [
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    return HttpResponse.json(db.notifications.filter((item) => item.userId === userId));
+    return HttpResponse.json(
+      db.notifications
+        .filter((item) => item.userId === userId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  }),
+
+  http.patch(`${API}/notifications/read-all`, async ({ request }) => {
+    await delay(120);
+    const userId = getUserIdFromAuthHeader(request.headers.get('Authorization'));
+
+    if (!userId) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const updated = db.notifications.filter((item) => item.userId === userId && !item.read);
+    updated.forEach((item) => {
+      item.read = true;
+    });
+    if (updated.length) persistMockCollections();
+    return HttpResponse.json(updated);
   }),
 
   http.patch(`${API}/notifications/:id/read`, async ({ params, request }) => {

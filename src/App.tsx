@@ -14,6 +14,8 @@ import { ShiftsPage } from '@/features/shifts/pages/ShiftsPage';
 import { NotificationsPage } from '@/features/notifications/pages/NotificationsPage';
 import { AnnouncementsPage } from '@/features/announcements/pages/AnnouncementsPage';
 import { ProfilePage } from '@/features/profile/pages/ProfilePage';
+import { TasksPage } from '@/features/tasks/pages/TasksPage';
+import { HandoverPage } from '@/features/handover/pages/HandoverPage';
 
 function App() {
   return (
@@ -52,6 +54,22 @@ function App() {
                   element={
                     <RoleGuard permissions={['shifts.view']}>
                       <ShiftsPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/tasks"
+                  element={
+                    <RoleGuard permissions={['tasks.view']}>
+                      <TasksPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
+                  path="/handover"
+                  element={
+                    <RoleGuard permissions={['handover.view']}>
+                      <HandoverPage />
                     </RoleGuard>
                   }
                 />

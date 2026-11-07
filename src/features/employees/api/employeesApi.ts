@@ -16,15 +16,19 @@ export const employeesApi = baseApi.injectEndpoints({
     }),
     createEmployee: builder.mutation<Employee, Omit<Employee, 'id'>>({
       query: (body) => ({ url: '/employees', method: 'POST', body }),
-      invalidatesTags: [{ type: 'Employee', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Employee', id: 'LIST' }, { type: 'Notification', id: 'LIST' }],
     }),
     updateEmployee: builder.mutation<Employee, Employee>({
       query: ({ id, ...body }) => ({ url: `/employees/${id}`, method: 'PUT', body }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: 'Employee', id }, { type: 'Employee', id: 'LIST' }],
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Employee', id },
+        { type: 'Employee', id: 'LIST' },
+        { type: 'Notification', id: 'LIST' },
+      ],
     }),
     deleteEmployee: builder.mutation<void, string>({
       query: (id) => ({ url: `/employees/${id}`, method: 'DELETE' }),
-      invalidatesTags: [{ type: 'Employee', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Employee', id: 'LIST' }, { type: 'Notification', id: 'LIST' }],
     }),
   }),
 });

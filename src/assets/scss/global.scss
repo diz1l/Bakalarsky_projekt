@@ -22,6 +22,22 @@ body {
   line-height: 1.5;
 }
 
+html[data-theme='dark'] body { background:#0b1220; color:#e5e7eb; }
+html[data-theme='dark'] .content { background:#0b1220; }
+html[data-theme='dark'] header { background:#111827; border-color:#263244; }
+html[data-theme='dark'] main,
+html[data-theme='dark'] section,
+html[data-theme='dark'] article,
+html[data-theme='dark'] [class*='Card'],
+html[data-theme='dark'] [class*='card'],
+html[data-theme='dark'] [class*='surface'] { background-color:#111827; color:#e5e7eb; border-color:#263244; }
+html[data-theme='dark'] input,
+html[data-theme='dark'] select,
+html[data-theme='dark'] textarea { background:#0f172a; color:#e5e7eb; border-color:#334155; }
+html[data-theme='dark'] table th { background:#172033; color:#e5e7eb; border-color:#334155; }
+html[data-theme='dark'] table td { border-color:#334155; }
+html[data-theme='dark'] a { color:inherit; }
+
 a {
   color: inherit;
   text-decoration: none;

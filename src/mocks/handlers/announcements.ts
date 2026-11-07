@@ -1,13 +1,8 @@
-﻿import { delay, http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { db, genId, persistMockCollections } from '../data/db';
+import { notifyRoles, notifyUsers } from '../data/notificationEvents';
 import type { Announcement } from '@/types';
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
-
-function getUserIdFromAuthHeader(authHeader: string | null): string | null {
-  if (!authHeader) return null;
-  return authHeader.replace('Bearer mock-jwt-', '');
-}
+import { API, getUserIdFromAuthHeader } from './utils';
 
 export const announcementsHandlers = [
   http.get(`${API}/announcements`, async () => {
@@ -33,6 +28,18 @@ export const announcementsHandlers = [
 
     db.announcements.unshift(announcement);
     persistMockCollections();
+    notifyRoles(
+      ['ADMIN', 'MANAGER', 'EMPLOYEE'],
+      {
+        title: body.priority === 'high' ? 'Important announcement' : 'New announcement',
+        message: announcement.title,
+        type: body.priority === 'high' ? 'warning' : 'info',
+        relatedType: 'announcement',
+        relatedId: announcement.id,
+      },
+      userId,
+      userId,
+    );
     return HttpResponse.json(announcement, { status: 201 });
   }),
 
@@ -54,6 +61,20 @@ export const announcementsHandlers = [
     };
 
     persistMockCollections();
+    const announcement = db.announcements[idx];
+    if (completed && announcement.authorId !== userId) {
+      notifyUsers(
+        [announcement.authorId],
+        {
+          title: 'Announcement completed',
+          message: `"${announcement.title}" was marked as completed.`,
+          type: 'success',
+          relatedType: 'announcement',
+          relatedId: announcement.id,
+        },
+        userId,
+      );
+    }
     return HttpResponse.json(db.announcements[idx]);
   }),
 

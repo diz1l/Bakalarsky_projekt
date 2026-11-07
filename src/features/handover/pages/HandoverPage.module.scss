@@ -1,0 +1,190 @@
+@use '../../../assets/scss/variables' as *;
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+
+  h1 { font-size: 1.55rem; letter-spacing: -0.03em; }
+}
+
+.subtitle { color: $text-secondary; font-size: 0.875rem; margin-top: 3px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid $border;
+  margin-bottom: 18px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+
+  &:hover { color: $text-primary; }
+}
+
+.activeTab { color: $primary; border-bottom-color: $primary; }
+
+.count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: $radius-full;
+  background: $danger;
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 20px;
+  text-align: center;
+}
+
+.list { display: flex; flex-direction: column; gap: 12px; }
+
+.card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-left: 4px solid $text-light;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: 16px 20px;
+}
+
+.important { border-left-color: $warning; }
+.critical { border-left-color: $danger; background: linear-gradient(90deg, rgba($danger, 0.05), transparent 40%), $bg-surface; }
+.resolved { opacity: 0.75; border-left-color: $text-light; }
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  h3 { font-size: 1rem; }
+}
+
+.categoryIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba($primary, 0.08);
+  font-size: 1.15rem;
+}
+
+.headerText { flex: 1; min-width: 0; }
+
+.meta {
+  color: $text-secondary;
+  font-size: 0.78rem;
+  margin-top: 2px;
+
+  strong { color: $text-primary; font-weight: 600; }
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+  max-width: 45%;
+}
+
+.content {
+  margin: 12px 0 0 50px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.ackRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 0 50px;
+}
+
+.ackCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid $border;
+  border-radius: $radius;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: $transition;
+
+  input { width: 16px; height: 16px; accent-color: $success; cursor: pointer; }
+  &:hover { border-color: $primary; }
+  &:has(input:checked) { border-color: $success; background: rgba($success, 0.08); }
+}
+
+.acks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0 50px;
+
+  &:empty { display: none; }
+}
+
+.ack {
+  padding: 3px 9px;
+  border-radius: $radius-full;
+  background: rgba($success, 0.1);
+  color: #047857;
+  font-size: 0.75rem;
+
+  em { color: $text-secondary; }
+}
+
+.ackAction { background: rgba($primary, 0.1); color: $primary-dark; }
+.ackPending { background: $bg-main; color: $text-secondary; }
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid $border;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 560px) { grid-template-columns: 1fr; }
+}
+
+.formActions { display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; }
+
+.modalText { color: $text-secondary; font-size: 0.875rem; margin-bottom: 12px; }
+
+@media (max-width: 720px) {
+  .cardHeader { flex-wrap: wrap; }
+  .badges { max-width: none; justify-content: flex-start; }
+  .content, .ackRow, .acks { margin-left: 0; }
+}
+
+:global(html[data-theme='dark']) {
+  .card { background: #111827; border-color: #263244; border-left-color: #475569; }
+  .important { border-left-color: $warning; }
+  .critical { border-left-color: $danger; background: linear-gradient(90deg, rgba($danger, 0.12), transparent 40%), #111827; }
+  .ackPending { background: #1f2937; }
+  .ack { color: #6ee7b7; }
+  .ackAction { color: #a5b4fc; }
+}

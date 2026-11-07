@@ -2,10 +2,12 @@
 import {
   useClearAllNotificationsMutation,
   useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
   useMarkReadMutation,
 } from '../api/notificationsApi';
 import { useToast } from '@/components/ui/Toast';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button/Button';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { Loader } from '@/components/ui/Loader/Loader';
@@ -23,9 +25,11 @@ const typeIcon: Record<string, string> = {
 
 export function NotificationsPage() {
   const { can } = usePermissions();
+  const { user } = useAuth();
   const canManage = can('notifications.manage');
-  const { data: notifications, isLoading } = useGetNotificationsQuery();
+  const { data: notifications, isLoading, isError, refetch } = useGetNotificationsQuery(user?.id ?? '');
   const [markRead] = useMarkReadMutation();
+  const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
   const [clearAll, { isLoading: clearing }] = useClearAllNotificationsMutation();
   const { showToast } = useToast();
   const [selected, setSelected] = useState<Notification | null>(null);
@@ -42,11 +46,16 @@ export function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     try {
-      await Promise.all(unread.map((item) => markRead(item.id).unwrap()));
+      await markAllRead().unwrap();
       showToast('All marked as read', 'success');
     } catch {
       showToast('Unable to mark all as read', 'error');
     }
+  };
+
+  const openNotification = (item: Notification) => {
+    setSelected(item);
+    if (canManage && !item.read) void handleMarkRead(item.id);
   };
 
   const handleClearAll = async () => {
@@ -61,6 +70,18 @@ export function NotificationsPage() {
 
   if (isLoading) return <Loader />;
 
+  if (isError) {
+    return (
+      <div>
+        <div className={s.toolbar}><h1>Notifications</h1></div>
+        <EmptyState title="Unable to load notifications" message="Check your connection and try again." />
+        <div className={s.retry}>
+          <Button variant="secondary" onClick={() => void refetch()}>Try again</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className={s.toolbar}>
@@ -69,7 +90,7 @@ export function NotificationsPage() {
         {canManage && (
           <div className={s.toolbarActions}>
             {unread.length > 0 && (
-              <Button variant="secondary" size="sm" onClick={handleMarkAllRead}>
+              <Button variant="secondary" size="sm" onClick={handleMarkAllRead} loading={markingAll}>
                 Mark all as read ({unread.length})
               </Button>
             )}
@@ -91,11 +112,11 @@ export function NotificationsPage() {
               key={item.id}
               data-testid={`notification-card-${item.id}`}
               className={clsx(s.card, !item.read && s.unread)}
-              onClick={() => setSelected(item)}
+              onClick={() => openNotification(item)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  setSelected(item);
+                  openNotification(item);
                 }
               }}
               role="button"

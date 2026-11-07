@@ -14,6 +14,9 @@
   display: flex;
   align-items: center;
 }
+.menu, .theme { color: $text-secondary; padding: 7px 9px; border-radius: $radius; &:hover { background: $bg-main; color: $primary; } }
+.menu { font-size: 18px; }
+.theme { font-size: 0.8125rem; }
 
 .right {
   display: flex;

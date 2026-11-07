@@ -1,4 +1,4 @@
-﻿export type StaffRole = 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+export type StaffRole = 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
 export type Role = StaffRole | 'GUEST';
 
 export interface User {
@@ -24,11 +24,14 @@ export interface Employee {
   status: 'active' | 'inactive';
 }
 
+export type ShiftType = 'DAY' | 'NIGHT';
+
 export interface Shift {
   id: string;
   employeeId: string;
   employeeName: string;
   date: string;
+  type?: ShiftType;
   startTime: string;
   endTime: string;
   department: string;
@@ -36,7 +39,7 @@ export interface Shift {
   status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
 }
 
-export type NotificationRelatedType = 'employee' | 'shift' | 'announcement' | 'system';
+export type NotificationRelatedType = 'employee' | 'shift' | 'announcement' | 'task' | 'handover' | 'system';
 
 export interface Notification {
   id: string;
@@ -50,6 +53,89 @@ export interface Notification {
   senderEmail: string;
   relatedType?: NotificationRelatedType;
   relatedId?: string;
+}
+
+export type AbsenceType = 'PAID_LEAVE' | 'SICK' | 'UNAVAILABLE';
+
+export interface Absence {
+  id: string;
+  employeeId: string;
+  date: string;
+  type: AbsenceType;
+  note?: string;
+}
+
+export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskStatus = 'open' | 'done' | 'skipped';
+
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  description?: string;
+  shiftType: ShiftType | 'ANY';
+  department: string;
+  weekdays: number[];
+  dueTime?: string;
+  priority: TaskPriority;
+  active: boolean;
+  createdBy: string;
+}
+
+export interface ShiftTask {
+  id: string;
+  templateId?: string;
+  title: string;
+  description?: string;
+  date: string;
+  shiftType: ShiftType;
+  department: string;
+  assigneeId?: string;
+  priority: TaskPriority;
+  dueTime?: string;
+  status: TaskStatus;
+  carriedOverFrom?: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  completedBy?: string;
+  completedByName?: string;
+  completedAt?: string;
+  comment?: string;
+}
+
+export type HandoverCategory = 'guests' | 'rooms' | 'maintenance' | 'cash' | 'security' | 'other';
+export type HandoverPriority = 'normal' | 'important' | 'critical';
+export type HandoverStatus = 'open' | 'acknowledged' | 'resolved';
+
+export interface HandoverAck {
+  userId: string;
+  userName: string;
+  readAt: string;
+  actionTakenAt?: string;
+  comment?: string;
+}
+
+export interface HandoverNote {
+  id: string;
+  date: string;
+  shiftType: ShiftType;
+  targetDate: string;
+  targetShiftType: ShiftType;
+  department: string;
+  category: HandoverCategory;
+  priority: HandoverPriority;
+  title: string;
+  content: string;
+  requiresAction: boolean;
+  status: HandoverStatus;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+  acknowledgements: HandoverAck[];
+  resolvedBy?: string;
+  resolvedAt?: string;
+  expectedRecipients?: { userId: string; name: string }[];
 }
 
 export interface Announcement {

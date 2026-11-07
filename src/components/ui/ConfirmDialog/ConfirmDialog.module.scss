@@ -1,0 +1,13 @@
+@use '../../../assets/scss/variables' as *;
+
+.message {
+  color: $text-secondary;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

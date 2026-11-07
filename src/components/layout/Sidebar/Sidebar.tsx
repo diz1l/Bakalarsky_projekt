@@ -3,6 +3,13 @@ import { usePermissions } from '@/hooks/usePermissions';
 import type { Permission } from '@/utils/permissions';
 import clsx from 'clsx';
 import s from './Sidebar.module.scss';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useGetNotificationsQuery } from '@/features/notifications/api/notificationsApi';
+import { useLocale, type Locale } from '@/app/locale';
+import { useGetHandoverNotesQuery } from '@/features/handover/api/handoverApi';
+import { needsMyAttention } from '@/features/handover/handoverUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
   path: string;
@@ -37,10 +44,16 @@ const navItems: NavItem[] = [
     icon: <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
   },
   {
-    path: '/notifications',
-    label: 'Notifications',
-    permission: 'notifications.view',
-    icon: <Icon d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />,
+    path: '/tasks',
+    label: 'Shift tasks',
+    permission: 'tasks.view',
+    icon: <Icon d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9" />,
+  },
+  {
+    path: '/handover',
+    label: 'Shift handover',
+    permission: 'handover.view',
+    icon: <Icon d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />,
   },
   {
     path: '/announcements',
@@ -56,11 +69,19 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { can } = usePermissions();
+  const { user } = useAuth();
+  const { locale, setLocale, t } = useLocale();
+  const [dark, setDark] = useState(() => localStorage.getItem('staff-theme') === 'dark');
+  const { data: notifications = [] } = useGetNotificationsQuery(user?.id ?? '', { pollingInterval: 30_000, refetchOnFocus: true, refetchOnReconnect: true });
+  const unreadCount = notifications.filter((item) => !item.read).length;
+  const { data: handoverNotes = [] } = useGetHandoverNotesQuery('active', { pollingInterval: 30_000, skip: !can('handover.view') });
+  const handoverCount = handoverNotes.filter((note) => needsMyAttention(note, user?.id)).length;
+  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('staff-theme', dark ? 'dark' : 'light'); }, [dark]);
 
   return (
-    <aside className={s.sidebar}>
+    <aside className={`${s.sidebar} ${collapsed ? s.collapsed : ''}`}>
       <div className={s.brand}>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M5 21V10.87M19 21V10.87" />
@@ -76,10 +97,17 @@ export function Sidebar() {
             className={({ isActive }) => clsx(s.link, isActive && s.active)}
           >
             {item.icon}
-            <span>{item.label}</span>
+            <span>{t(item.label)}</span>
+            {item.path === '/handover' && handoverCount > 0 && <b className={s.navBadge} aria-label={`${handoverCount} unread`}>{handoverCount}</b>}
           </NavLink>
         ))}
       </nav>
+      <div className={s.bottom}>
+        {can('notifications.view') && <Link to="/notifications" className={s.bottomLink} title={t('Notifications')}><Icon d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /><span>{t('Notifications')}</span>{unreadCount > 0 && <b>{unreadCount > 99 ? '99+' : unreadCount}</b>}</Link>}
+        <button className={s.bottomLink} onClick={() => setDark((value) => !value)} title={t(dark ? 'Light' : 'Dark')}><span className={s.controlIcon}>{dark ? '☀' : '☾'}</span><span>{t(dark ? 'Light' : 'Dark')}</span></button>
+        <label className={s.language}><span className={s.controlIcon}>文</span><span>{t('Language')}</span><select aria-label={t('Language')} value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="en">EN</option><option value="cs">CS</option><option value="ru">RU</option></select></label>
+        <button className={s.collapse} onClick={onToggle} aria-label={t(collapsed ? 'Expand sidebar' : 'Collapse sidebar')}>{collapsed ? '›' : '‹'}<span>{collapsed ? t('Expand sidebar') : t('Collapse sidebar')}</span></button>
+      </div>
     </aside>
   );
 }

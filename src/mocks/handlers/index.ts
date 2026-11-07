@@ -3,6 +3,9 @@ import { employeesHandlers } from './employees';
 import { shiftsHandlers } from './shifts';
 import { notificationsHandlers } from './notifications';
 import { announcementsHandlers } from './announcements';
+import { absencesHandlers } from './absences';
+import { tasksHandlers } from './tasks';
+import { handoverHandlers } from './handover';
 
 export const handlers = [
   ...authHandlers,
@@ -10,4 +13,7 @@ export const handlers = [
   ...shiftsHandlers,
   ...notificationsHandlers,
   ...announcementsHandlers,
+  ...absencesHandlers,
+  ...tasksHandlers,
+  ...handoverHandlers,
 ];

@@ -1,13 +1,7 @@
-﻿import { delay, http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { db } from '../data/db';
 import type { ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest, UpdateProfileRequest, User } from '@/types';
-
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
-
-function getUserIdFromAuthHeader(authHeader: string | null): string | null {
-  if (!authHeader) return null;
-  return authHeader.replace('Bearer mock-jwt-', '');
-}
+import { API, getUserIdFromAuthHeader } from './utils';
 
 function toUser(entity: { id: string; login: string; email: string; name: string; role: User['role'] }): User {
   return {

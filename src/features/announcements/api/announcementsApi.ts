@@ -11,15 +11,15 @@ export const announcementsApi = baseApi.injectEndpoints({
     }),
     createAnnouncement: builder.mutation<Announcement, CreateAnnouncementPayload>({
       query: (body) => ({ url: '/announcements', method: 'POST', body }),
-      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }, { type: 'Notification', id: 'LIST' }],
     }),
     toggleAnnouncementDone: builder.mutation<Announcement, { id: string; completed: boolean }>({
       query: ({ id, ...body }) => ({ url: `/announcements/${id}`, method: 'PATCH', body }),
-      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }, { type: 'Notification', id: 'LIST' }],
     }),
     deleteAnnouncement: builder.mutation<void, string>({
       query: (id) => ({ url: `/announcements/${id}`, method: 'DELETE' }),
-      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Announcement', id: 'LIST' }, { type: 'Notification', id: 'LIST' }],
     }),
   }),
 });

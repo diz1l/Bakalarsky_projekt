@@ -4,7 +4,8 @@ import '@/assets/scss/global.scss';
 import App from './App';
 
 async function enableMocking() {
-  if (import.meta.env.DEV) {
+  // Set VITE_USE_MOCKS=false to talk to the real backend (see backend/README.md).
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false') {
     const { worker } = await import('./mocks/browser');
     return worker.start({ onUnhandledRequest: 'bypass' });
   }

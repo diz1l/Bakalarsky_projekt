@@ -1,8 +1,9 @@
-﻿import '@testing-library/jest-dom';
+import '@testing-library/jest-dom';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import { server } from './server';
 import { store } from '@/app/store';
 import { logout } from '@/features/auth/slices/authSlice';
+import { baseApi } from '@/app/baseApi';
 import { resetMockDb } from '@/mocks/data/db';
 
 const NativeRequest = globalThis.Request;
@@ -33,6 +34,7 @@ beforeEach(() => {
   localStorage.clear();
   resetMockDb();
   store.dispatch(logout());
+  store.dispatch(baseApi.util.resetApiState());
   window.history.pushState({}, 'Test', '/');
   vi.spyOn(window, 'confirm').mockImplementation(() => true);
 });

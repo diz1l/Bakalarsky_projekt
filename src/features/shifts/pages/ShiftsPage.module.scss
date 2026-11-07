@@ -1,145 +1,49 @@
-@use 'sass:color';
 @use '../../../assets/scss/variables' as *;
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-  h1 { font-size: 1.5rem; }
-}
-
-.weekNav {
-  display: flex;
-  gap: 6px;
-}
-
-.weekGrid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-
-.dayCol {
-  background: $bg-surface;
-  border-radius: $radius;
-  box-shadow: $shadow-sm;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-
-.today { border: 2px solid $primary; }
-
-.dayHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid $border;
-}
-
-.dayName { font-weight: 600; font-size: 0.8125rem; }
-.dayDate { font-size: 0.75rem; color: $text-light; }
-
-.dayBody {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-}
-
-.shiftCard {
-  position: relative;
-  padding: 8px 10px;
-  background: $bg-main;
-  border-radius: $radius-sm;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: $transition;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-
-  &:hover { background: rgba($primary, 0.06); }
-}
-
-.shiftName { font-weight: 600; }
-.shiftTime { color: $text-secondary; font-size: 0.75rem; }
-
-.delBtn {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 1rem;
-  color: $text-light;
-  &:hover { color: $danger; }
-}
-
-.addDay {
-  margin-top: auto;
-  text-align: center;
-  padding: 6px;
-  font-size: 0.75rem;
-  color: $text-light;
-  border-radius: $radius-sm;
-  &:hover { background: $bg-main; color: $primary; }
-}
-
-.timeRow { display: flex; gap: 12px; }
-
-.conflict {
-  background: rgba($warning, 0.1);
-  color: color.adjust($warning, $lightness: -10%);
-  padding: 10px 14px;
-  border-radius: $radius;
-  font-size: 0.8125rem;
-  margin-bottom: 12px;
-}
-
-.formActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 8px;
-}
-
-@media (max-width: 1200px) {
-  .weekGrid {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(220px, 1fr);
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .dayCol {
-    min-height: 280px;
-  }
-}
-
-@media (max-width: 768px) {
-  .toolbar {
-    align-items: stretch;
-  }
-
-  .weekNav {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .timeRow {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .formActions {
-    flex-wrap: wrap;
-  }
-
-  .formActions > * {
-    width: 100%;
-  }
-}
+.toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:20px; h1 { font-size:1.55rem; letter-spacing:-.03em; } }
+.subtitle { color:$text-secondary; font-size:.875rem; margin-top:3px; }
+.weekNav { display:flex; gap:6px; }
+.scheduleCard { background:$bg-surface; border:1px solid $border; border-radius:14px; box-shadow:$shadow-sm; overflow:hidden; }
+.tableScroll { overflow:auto; max-height:calc(100vh - 255px); }
+.schedule { border-collapse:separate; border-spacing:0; min-width:max-content; width:100%; font-size:.8rem; }
+.schedule th,.schedule td { border-right:1px solid $border; border-bottom:1px solid $border; text-align:center; }
+.schedule thead th { position:sticky; top:0; z-index:2; min-width:43px; background:$bg-main; color:$text-secondary; padding:6px 4px; font-weight:500; }
+.schedule thead th span,.schedule thead th b { display:block; }
+.schedule thead th span { font-size:.65rem; text-transform:uppercase; }
+.schedule thead th b { color:$text-primary; font-size:.85rem; }
+.employeeHead { left:0; z-index:4!important; min-width:180px!important; text-align:left!important; padding-left:16px!important; }
+.employeeName { position:sticky; left:0; z-index:1; text-align:left!important; min-width:180px; padding:7px 28px 7px 12px; background:$bg-surface; font-weight:600; }
+.employeeName small { display:block; font-size:.68rem; font-weight:400; color:$text-secondary; }
+.removeEmployee { position:absolute; right:6px; top:50%; transform:translateY(-50%); opacity:0; color:$text-secondary; border-radius:5px; width:22px; height:22px; &:hover { color:$danger; background:rgba($danger,.1); } }
+.employeeName:hover .removeEmployee,.removeEmployee:focus-visible { opacity:1; }
+.schedule td { width:43px; height:38px; padding:2px; background:$bg-surface; }
+.schedule td button { width:100%; height:32px; border-radius:6px; color:$text-secondary; font-size:.75rem; font-weight:650; }
+.schedule td button:hover { outline:2px solid $primary; outline-offset:-2px; }
+.todayHead { background:rgba($primary,.12)!important; }
+.todayCell { box-shadow:inset 0 0 0 1px rgba($primary,.45); }
+.codeD { background:#dbeafe!important; color:#1d4ed8!important; }
+.codeN { background:#e0e7ff!important; color:#4338ca!important; }
+.codeH { background:#dcfce7!important; color:#15803d!important; }
+.codeS { background:#ffedd5!important; color:#c2410c!important; }
+.codeX { background:#e2e8f0!important; color:#64748b!important; }
+.legend { display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding:13px 16px; color:$text-secondary; font-size:.75rem; }
+.legend span { display:flex; align-items:center; gap:6px; }
+.legend i { width:23px; height:23px; border-radius:5px; display:grid; place-items:center; font-style:normal; font-weight:700; }
+.hint { margin-left:auto; }
+.rosterTools { display:flex; justify-content:flex-end; align-items:center; gap:12px; color:$text-secondary; font-size:.8rem; margin:-4px 0 12px; }
+.assignedTo { padding:10px 12px; border-radius:8px; background:rgba($primary,.08); margin-bottom:14px; color:$text-secondary; font-size:.85rem; strong { color:$text-primary; margin-left:4px; } }
+.typePicker,.statusChoices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:12px 0 16px; }
+.typePicker button,.statusChoices button { display:flex; align-items:center; gap:10px; min-height:52px; padding:8px 12px; border:1px solid $border; border-radius:9px; text-align:left; background:$bg-surface; color:$text-primary; transition:$transition; &:hover { border-color:$primary; transform:translateY(-1px); } }
+.typePicker button b,.statusChoices button b { display:grid; place-items:center; width:32px; height:32px; border-radius:7px; background:rgba($primary,.1); color:$primary; font-size:1rem; }
+.typePicker button span,.statusChoices button span { font-size:.82rem; }
+.typePicker .selectedType { border-color:$primary; box-shadow:0 0 0 2px rgba($primary,.12); background:rgba($primary,.04); }
+.statusChoices { grid-template-columns:1fr; }
+.statusChoices button b { background:transparent; }
+.addDescription { color:$text-secondary; font-size:.875rem; margin-bottom:12px; }
+.employeePicker { display:grid; gap:7px; max-height:50vh; overflow:auto; }
+.employeePicker button { display:flex; align-items:center; justify-content:space-between; padding:11px 13px; border:1px solid $border; border-radius:9px; text-align:left; &:hover { border-color:$primary; background:rgba($primary,.05); } }
+.employeePicker small { display:block; color:$text-secondary; font-size:.75rem; }
+.timeRow { display:flex; gap:12px; }
+.conflict { background:rgba($warning,.1); color:$warning; padding:10px 14px; border-radius:$radius; font-size:.8125rem; margin-bottom:12px; }
+.formActions { display:flex; justify-content:flex-end; gap:12px; padding-top:8px; }
+@media(max-width:768px) { .toolbar { align-items:stretch; } .weekNav { width:100%; justify-content:space-between; } .timeRow { flex-direction:column; gap:0; } .formActions { flex-wrap:wrap; } .formActions>* { width:100%; } .tableScroll { max-height:calc(100vh - 310px); } }

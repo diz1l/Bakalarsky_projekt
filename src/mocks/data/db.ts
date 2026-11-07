@@ -1,5 +1,7 @@
-﻿import type { Announcement, Employee, Notification, Shift, StaffRole, User } from '@/types';
+import type { Absence, Announcement, Employee, HandoverNote, Notification, Shift, ShiftTask, StaffRole, TaskTemplate, User } from '@/types';
 import { loadMockState, resetMockState, saveMockState } from './persistence';
+import { toDateString } from '@/utils/dateUtils';
+import { getCurrentSlot, getNextSlot, getPreviousSlot } from '@/utils/shiftUtils';
 
 export interface MockUser extends User {
   password: string;
@@ -12,7 +14,7 @@ function clone<T>(value: T): T {
 function dateStr(offset: number): string {
   const d = new Date();
   d.setDate(d.getDate() + offset);
-  return d.toISOString().split('T')[0];
+  return toDateString(d);
 }
 
 function isoAgo(hours: number): string {
@@ -356,26 +358,174 @@ const seedAnnouncements: Announcement[] = [
   },
 ];
 
+const seedAbsences: Absence[] = [
+  { id: 'abs-1', employeeId: 'emp-6', date: dateStr(1), type: 'PAID_LEAVE' },
+  { id: 'abs-2', employeeId: 'emp-5', date: dateStr(3), type: 'SICK' },
+];
+
+const seedTaskTemplates: TaskTemplate[] = [
+  {
+    id: 'tpl-1',
+    title: 'Count the cash register and sign the cash report',
+    shiftType: 'ANY',
+    department: 'Front Desk',
+    weekdays: [],
+    priority: 'high',
+    active: true,
+    createdBy: 'usr-2',
+  },
+  {
+    id: 'tpl-2',
+    title: 'Print tomorrow\'s arrivals list',
+    shiftType: 'NIGHT',
+    department: 'Front Desk',
+    weekdays: [],
+    dueTime: '23:00',
+    priority: 'medium',
+    active: true,
+    createdBy: 'usr-2',
+  },
+  {
+    id: 'tpl-3',
+    title: 'Check that all checked-out rooms are cleaned',
+    shiftType: 'DAY',
+    department: 'Housekeeping',
+    weekdays: [],
+    dueTime: '16:00',
+    priority: 'medium',
+    active: true,
+    createdBy: 'usr-2',
+  },
+  {
+    id: 'tpl-4',
+    title: 'Walk through corridors and emergency exits',
+    shiftType: 'NIGHT',
+    department: 'ALL',
+    weekdays: [],
+    dueTime: '02:00',
+    priority: 'low',
+    active: true,
+    createdBy: 'usr-1',
+  },
+];
+
+const currentSlot = getCurrentSlot();
+const previousSlot = getPreviousSlot(currentSlot);
+const nextSlot = getNextSlot(currentSlot);
+
+const seedTasks: ShiftTask[] = [
+  {
+    id: 'task-1',
+    title: 'Call the guest in room 204 about late check-out',
+    date: currentSlot.date,
+    shiftType: currentSlot.type,
+    department: 'Front Desk',
+    priority: 'high',
+    status: 'open',
+    carriedOverFrom: 'task-0',
+    createdBy: 'usr-2',
+    createdByName: 'Sarah Connor',
+    createdAt: isoAgo(14),
+  },
+  {
+    id: 'task-2',
+    title: 'Restock minibar in rooms 301–310',
+    date: currentSlot.date,
+    shiftType: currentSlot.type,
+    department: 'Housekeeping',
+    assigneeId: 'emp-3',
+    priority: 'medium',
+    status: 'open',
+    createdBy: 'usr-2',
+    createdByName: 'Sarah Connor',
+    createdAt: isoAgo(3),
+  },
+  {
+    id: 'task-3',
+    title: 'Prepare welcome package for the VIP guest arriving tomorrow',
+    date: nextSlot.date,
+    shiftType: nextSlot.type,
+    department: 'Front Desk',
+    priority: 'medium',
+    status: 'open',
+    createdBy: 'usr-3',
+    createdByName: 'Mike Wilson',
+    createdAt: isoAgo(1),
+  },
+];
+
+const seedHandoverNotes: HandoverNote[] = [
+  {
+    id: 'hand-1',
+    date: previousSlot.date,
+    shiftType: previousSlot.type,
+    targetDate: currentSlot.date,
+    targetShiftType: currentSlot.type,
+    department: 'Maintenance',
+    category: 'maintenance',
+    priority: 'critical',
+    title: 'Water leak in room 312',
+    content: 'The bathroom tap in 312 is leaking. The guest was moved to 315. A plumber is booked for 9:00 — please let him in and check the result.',
+    requiresAction: true,
+    status: 'open',
+    authorId: 'usr-2',
+    authorName: 'Sarah Connor',
+    createdAt: isoAgo(5),
+    updatedAt: isoAgo(5),
+    acknowledgements: [],
+  },
+  {
+    id: 'hand-2',
+    date: previousSlot.date,
+    shiftType: previousSlot.type,
+    targetDate: currentSlot.date,
+    targetShiftType: currentSlot.type,
+    department: 'Front Desk',
+    category: 'guests',
+    priority: 'normal',
+    title: 'Room 105 pays at check-out',
+    content: 'Mr. Novak (105) will pay the full amount at check-out. Payment is confirmed by the manager.',
+    requiresAction: false,
+    status: 'acknowledged',
+    authorId: 'usr-3',
+    authorName: 'Mike Wilson',
+    createdAt: isoAgo(6),
+    updatedAt: isoAgo(2),
+    acknowledgements: [{ userId: 'usr-2', userName: 'Sarah Connor', readAt: isoAgo(2) }],
+  },
+];
+
 const persistedState = loadMockState();
 
 export const db = {
   users: clone(seedUsers),
-  employees: clone(seedEmployees),
-  shifts: clone(seedShifts),
+  employees: persistedState.employees ? clone(persistedState.employees) : clone(seedEmployees),
+  shifts: persistedState.shifts ? clone(persistedState.shifts) : clone(seedShifts),
   notifications: persistedState.notifications ? clone(persistedState.notifications) : clone(seedNotifications),
   announcements: persistedState.announcements ? clone(persistedState.announcements) : clone(seedAnnouncements),
+  absences: persistedState.absences ? clone(persistedState.absences) : clone(seedAbsences),
+  taskTemplates: persistedState.taskTemplates ? clone(persistedState.taskTemplates) : clone(seedTaskTemplates),
+  tasks: persistedState.tasks ? clone(persistedState.tasks) : clone(seedTasks),
+  handoverNotes: persistedState.handoverNotes ? clone(persistedState.handoverNotes) : clone(seedHandoverNotes),
 };
 
-let nextId = 100;
+let nextId = 0;
 
+// Time-based prefix keeps ids unique across reloads, when persisted records are restored.
 export function genId(prefix: string) {
-  return `${prefix}-${++nextId}`;
+  return `${prefix}-${Date.now().toString(36)}${(++nextId).toString(36)}`;
 }
 
 export function persistMockCollections() {
   saveMockState({
+    employees: db.employees,
+    shifts: db.shifts,
     notifications: db.notifications,
     announcements: db.announcements,
+    absences: db.absences,
+    taskTemplates: db.taskTemplates,
+    tasks: db.tasks,
+    handoverNotes: db.handoverNotes,
   });
 }
 
@@ -389,6 +539,10 @@ export function resetMockDb() {
   db.shifts = clone(seedShifts);
   db.notifications = clone(seedNotifications);
   db.announcements = clone(seedAnnouncements);
-  nextId = 100;
+  db.absences = clone(seedAbsences);
+  db.taskTemplates = clone(seedTaskTemplates);
+  db.tasks = clone(seedTasks);
+  db.handoverNotes = clone(seedHandoverNotes);
+  nextId = 0;
   resetMockState();
 }

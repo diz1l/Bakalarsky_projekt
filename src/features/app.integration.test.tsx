@@ -1,4 +1,4 @@
-﻿import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test } from 'vitest';
 import App from '@/App';
@@ -36,10 +36,10 @@ describe('App flows (mock mode)', () => {
     expect(screen.queryByRole('link', { name: 'Employees' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Shifts' }));
-    expect(await screen.findByRole('heading', { name: 'Shifts' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Shift schedule' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add Shift' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('link', { name: 'Notifications' }));
+    await user.click(screen.getByRole('link', { name: /^Notifications/ }));
     expect(await screen.findByRole('heading', { name: 'Notifications' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Mark all as read/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Clear all' })).not.toBeInTheDocument();
@@ -86,15 +86,29 @@ describe('App flows (mock mode)', () => {
     renderAtRoute(<App />, '/login');
     await signInAsAdmin(user);
 
-    await user.click(screen.getByRole('link', { name: 'Notifications' }));
+    let initialUnreadCount = 0;
+    await waitFor(() => {
+      initialUnreadCount = Number(screen.getByTitle('Notifications').querySelector('b')?.textContent);
+      expect(initialUnreadCount).toBeGreaterThan(0);
+    });
+    await user.click(screen.getByRole('link', { name: /^Notifications/ }));
     await screen.findByRole('heading', { name: 'Notifications' });
 
     const cards = await screen.findAllByTestId(/notification-card-/);
     await user.click(cards[0]);
     expect(await screen.findByText('Sender email')).toBeInTheDocument();
     expect(screen.getByText(/@hotel\.com/)).toBeInTheDocument();
+    await waitFor(() => {
+      const unreadBadge = screen.getByTitle('Notifications').querySelector('b');
+      expect(unreadBadge).toBeInTheDocument();
+      expect(Number(unreadBadge?.textContent)).toBe(initialUnreadCount - 1);
+    });
 
     await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: /Mark all as read/ }));
+    await waitFor(() => {
+      expect(screen.queryByTitle('Notifications')?.querySelector('b')).not.toBeInTheDocument();
+    });
     await user.click(screen.getByRole('button', { name: 'Clear all' }));
 
     expect(await screen.findByText('No notifications')).toBeInTheDocument();
@@ -157,4 +171,3 @@ describe('App flows (mock mode)', () => {
     expect(await screen.findByText('Password updated in mock mode')).toBeInTheDocument();
   });
 });
-

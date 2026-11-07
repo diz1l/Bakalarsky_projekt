@@ -39,7 +39,7 @@ export function DashboardPage() {
   const { data: employees = [] } = useGetEmployeesQuery();
   const { data: weekShifts = [] } = useGetShiftsQuery({ weekStart: thisWeekStart });
   const { data: nextWeekShifts = [] } = useGetShiftsQuery({ weekStart: nextWeekStart });
-  const { data: notifications = [] } = useGetNotificationsQuery();
+  const { data: notifications = [] } = useGetNotificationsQuery(user?.id ?? '');
   const { data: announcements = [] } = useGetAnnouncementsQuery();
 
   const mergedShifts = useMemo(() => {

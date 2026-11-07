@@ -2,7 +2,7 @@ import { baseApi } from '@/app/baseApi';
 import type { ShiftTask, ShiftType, TaskTemplate } from '@/types';
 
 export type CreateTaskPayload = Pick<ShiftTask, 'title' | 'date' | 'shiftType' | 'department' | 'priority'> &
-  Partial<Pick<ShiftTask, 'description' | 'assigneeId' | 'dueTime'>>;
+  Partial<Pick<ShiftTask, 'description' | 'section' | 'sortOrder' | 'assigneeId' | 'dueTime'>>;
 
 export type TemplatePayload = Omit<TaskTemplate, 'id' | 'createdBy'>;
 
@@ -19,6 +19,10 @@ export const tasksApi = baseApi.injectEndpoints({
     }),
     updateTask: builder.mutation<ShiftTask, Partial<ShiftTask> & { id: string }>({
       query: ({ id, ...body }) => ({ url: `/tasks/${id}`, method: 'PATCH', body }),
+      invalidatesTags: [{ type: 'Task', id: 'LIST' }],
+    }),
+    updateTasksBulk: builder.mutation<{ updated: number }, { ids: string[]; status: 'open' | 'done' }>({
+      query: (body) => ({ url: '/tasks/bulk', method: 'PATCH', body }),
       invalidatesTags: [{ type: 'Task', id: 'LIST' }],
     }),
     deleteTask: builder.mutation<void, string>({
@@ -39,7 +43,7 @@ export const tasksApi = baseApi.injectEndpoints({
     }),
     deleteTaskTemplate: builder.mutation<void, string>({
       query: (id) => ({ url: `/task-templates/${id}`, method: 'DELETE' }),
-      invalidatesTags: [{ type: 'TaskTemplate', id: 'LIST' }],
+      invalidatesTags: [{ type: 'TaskTemplate', id: 'LIST' }, { type: 'Task', id: 'LIST' }],
     }),
   }),
 });
@@ -48,6 +52,7 @@ export const {
   useGetTasksQuery,
   useCreateTaskMutation,
   useUpdateTaskMutation,
+  useUpdateTasksBulkMutation,
   useDeleteTaskMutation,
   useGetTaskTemplatesQuery,
   useCreateTaskTemplateMutation,

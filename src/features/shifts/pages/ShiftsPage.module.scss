@@ -65,6 +65,20 @@
 :global(html[data-theme='dark']) .mobilePerson { background:#111827; color:#e5e7eb; }
 :global(html[data-theme='dark']) .requestItem { border-color:#334155; }
 :global(html[data-theme='dark']) .mobileDateNav select { color:#e5e7eb; }
+:global(html[data-theme='dark']) .rosterTools,
+:global(html[data-theme='dark']) .removeEmployee,
+:global(html[data-theme='dark']) .shiftCellButton { color:#cbd5e1; }
+:global(html[data-theme='dark']) .legend,
+:global(html[data-theme='dark']) .requestItem >div:first-child span,
+:global(html[data-theme='dark']) .employeePicker small { color:#cbd5e1; }
+:global(html[data-theme='dark']) .typePicker button,
+:global(html[data-theme='dark']) .statusChoices button {
+  background:#1e293b;
+  border-color:#475569;
+  color:#e5e7eb;
+}
+:global(html[data-theme='dark']) .typePicker button b,
+:global(html[data-theme='dark']) .statusChoices button b { color:#c7d2fe; }
 :global(html[data-theme='dark']) .subtitle,
 :global(html[data-theme='dark']) .employeeName small { color:#94a3b8; }
 @media(max-width:768px) {

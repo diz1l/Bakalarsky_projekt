@@ -24,3 +24,8 @@
   font-size: 0.875rem;
   color: $text-secondary;
 }
+
+:global(html[data-theme='dark']) {
+  .icon { color: #94a3b8; }
+  .msg { color: #cbd5e1; }
+}

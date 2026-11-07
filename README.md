@@ -8,7 +8,8 @@ Hotel staff operations app with an optional Express/Prisma backend. The frontend
 - Forgot/Reset password as UI wrapper flow (mock only).
 - Dashboard with quick insights (employees, shifts, notifications, announcements).
 - Monthly employee shift matrix with day/night types and API-backed leave, sick, and unavailable marks.
-- Shift task checklists and next-shift handover with acknowledgement tracking.
+- Persistent, chaptered shift checklists with per-shift progress, bulk check/uncheck, and manager/admin-only template editing.
+- Next-shift handover with acknowledgement tracking.
 - English, Czech, and Russian interface options; responsive navigation and light/dark themes.
 - Role-aware notifications for shifts, employees, schedule conflicts, and announcements.
 - Notifications with an unread counter, details modal, `Mark all as read`, and `Clear all`.
@@ -104,10 +105,10 @@ Run the frontend and API separately using [backend/README.md](backend/README.md)
 The React/Vite frontend is ready to build as a Cloudflare Pages site:
 
 - Root directory: `/`
-- Build command: `npm run build`
+- Build command: `npm run build` — exactly this. Typing `tsc -b && vite build` directly fails with `tsc: not found`, because only npm scripts put `node_modules/.bin` on the `PATH`.
 - Build output directory: `dist`
-- Production environment variable in the Pages project settings: `VITE_API_URL` set to the public API origin ending in `/api` (see `.env.production.example` for the expected format).
+- Without `VITE_API_URL` the build runs as a **demo on mock data** (MSW in the browser, data kept in the visitor's `localStorage`). To use a deployed backend, set `VITE_API_URL` to the public API origin ending in `/api` (see `.env.production.example`); `VITE_USE_MOCKS=true/false` forces either mode.
 
 These settings match Cloudflare's [Pages build configuration](https://developers.cloudflare.com/pages/configuration/build-configuration/). The build has no top-level `404.html`, so Pages' [SPA fallback](https://developers.cloudflare.com/pages/configuration/serving-pages/) serves client-side routes such as `/profile` on direct loads. Do not add a catch-all `_redirects` rule.
 
-Pages only hosts the frontend in this setup. The Express/Prisma API must be deployed separately and reachable over HTTPS. Configure its `CORS_ORIGIN` and `APP_URL` to the Pages domain, use a production database with persistent storage, set a strong `JWT_SECRET`, configure SMTP, and replace the seeded admin credential before accepting real users. The checked-in SQLite configuration is for local development and the API has not been ported to Cloudflare Workers. No Cloudflare deployment has been run.
+Pages only hosts the frontend in this setup. The Express/Prisma API must be deployed separately and reachable over HTTPS. Configure its `CORS_ORIGIN` and `APP_URL` to the Pages domain, use a production database with persistent storage, set a strong `JWT_SECRET`, configure SMTP, and replace the seeded admin credential before accepting real users. The checked-in SQLite configuration is for local development and the API has not been ported to Cloudflare Workers. 

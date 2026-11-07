@@ -19,3 +19,8 @@
   font-size: 0.75rem;
   color: $danger;
 }
+
+:global(html[data-theme='dark']) {
+  .label { color: #cbd5e1; }
+  .req, .error { color: #fca5a5; }
+}

@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import App from '@/App';
 import { renderAtRoute } from '@/test/render';
 import { db } from '@/mocks/data/db';
+import { getCurrentSlot } from '@/utils/shiftUtils';
 
 async function signIn(
   user: ReturnType<typeof userEvent.setup>,
@@ -39,6 +40,7 @@ describe('Shift tasks and handover (mock mode)', () => {
     await user.click(screen.getByRole('link', { name: 'Shift tasks' }));
     const checkbox = await screen.findByRole('checkbox', { name: /Restock minibar/ });
     expect(screen.queryByText(/Call the guest in room 204/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Recurring checklists' })).not.toBeInTheDocument();
 
     await user.click(checkbox);
     await waitFor(() => expect(screen.getByRole('checkbox', { name: /Restock minibar/ })).toBeChecked());
@@ -79,5 +81,60 @@ describe('Shift tasks and handover (mock mode)', () => {
     await screen.findAllByRole('checkbox');
     screen.getAllByRole('checkbox').forEach((checkbox) => expect(checkbox).toBeDisabled());
     expect(screen.queryByRole('button', { name: /Add task/ })).not.toBeInTheDocument();
+  });
+
+  test('Manager can check and uncheck the whole shift checklist and edit its chapters', async () => {
+    const user = userEvent.setup();
+    renderAtRoute(<App />, '/login');
+    await signIn(user, 'manager@hotel.com');
+
+    await user.click(screen.getByRole('link', { name: 'Shift tasks' }));
+    await screen.findAllByRole('checkbox', { name: /Mark as done/ });
+    await user.click(await screen.findByRole('button', { name: 'Check all' }));
+    await waitFor(() => {
+      const current = getCurrentSlot();
+      const checkable = db.tasks.filter((task) =>
+        task.date === current.date && task.shiftType === current.type && task.status !== 'skipped');
+      expect(checkable.length).toBeGreaterThan(0);
+      checkable.forEach((task) => expect(task.status).toBe('done'));
+    });
+    await screen.findByRole('button', { name: 'Uncheck all' });
+    await waitFor(() => {
+      const checkboxes = screen.getAllByRole('checkbox', { name: /Mark as done/ });
+      expect(checkboxes.length).toBeGreaterThan(0);
+      checkboxes.forEach((checkbox) => expect(checkbox).toBeChecked());
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Uncheck all' }));
+    await screen.findByRole('button', { name: 'Check all' });
+    await waitFor(() => screen.getAllByRole('checkbox', { name: /Mark as done/ })
+      .forEach((checkbox) => expect(checkbox).not.toBeChecked()));
+
+    await user.click(screen.getByRole('tab', { name: 'Recurring checklists' }));
+    expect(await screen.findByRole('heading', { name: 'At the start of shift' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'During the shift' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'At the end of shift' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /New checklist item/ }));
+    await screen.findByRole('heading', { name: 'New checklist item' });
+    await user.type(screen.getByLabelText(/^Task/), 'Checklist task to remove');
+    await user.selectOptions(screen.getByLabelText('Checklist chapter'), 'start');
+    await user.selectOptions(screen.getByLabelText('Department'), 'ALL');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await screen.findByText('Checklist task to remove');
+
+    const newTemplate = db.taskTemplates.find((template) => template.title === 'Checklist task to remove');
+    expect(newTemplate?.section).toBe('start');
+    const current = getCurrentSlot();
+    await waitFor(() => expect(db.tasks.some((task) =>
+      task.templateId === newTemplate?.id && task.date === current.date && task.shiftType === current.type)).toBe(true));
+
+    await user.click(screen.getByRole('button', { name: 'Delete: Checklist task to remove' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await waitFor(() => {
+      expect(db.taskTemplates.some((template) => template.id === newTemplate?.id)).toBe(false);
+      expect(db.tasks.some((task) => task.templateId === newTemplate?.id
+        && task.date === current.date && task.shiftType === current.type)).toBe(false);
+    });
   });
 });

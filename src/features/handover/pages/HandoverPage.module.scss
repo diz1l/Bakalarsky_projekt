@@ -184,7 +184,11 @@
   .card { background: #111827; border-color: #263244; border-left-color: #475569; }
   .important { border-left-color: $warning; }
   .critical { border-left-color: $danger; background: linear-gradient(90deg, rgba($danger, 0.12), transparent 40%), #111827; }
-  .ackPending { background: #1f2937; }
+  .subtitle, .tab { color: #cbd5e1; }
+  .activeTab { color: #c7d2fe; }
+  .tabs, .cardActions { border-color: #334155; }
+  .ackCheck { background: #1e293b; border-color: #475569; color: #e5e7eb; }
+  .ackPending { background: #1f2937; color: #cbd5e1; }
   .ack { color: #6ee7b7; }
   .ackAction { color: #a5b4fc; }
 }

@@ -13,6 +13,8 @@ function task(overrides: Partial<ShiftTask>): ShiftTask {
     date: '2026-11-06',
     shiftType: 'NIGHT',
     department: 'Front Desk',
+    section: 'during',
+    sortOrder: 0,
     priority: 'medium',
     status: 'open',
     createdBy: 'usr-2',

@@ -12,9 +12,17 @@
 }
 
 .default { background: $bg-main; color: $text-secondary; }
-.success { background: rgba($success, 0.12); color: color.adjust($success, $lightness: -10%); }
-.warning { background: rgba($warning, 0.12); color: color.adjust($warning, $lightness: -10%); }
-.danger  { background: rgba($danger, 0.12);  color: color.adjust($danger, $lightness: -10%); }
+.success { background: rgba($success, 0.12); color: #047857; }
+.warning { background: rgba($warning, 0.12); color: #92400e; }
+.danger  { background: rgba($danger, 0.12);  color: #b91c1c; }
 .info    { background: rgba($info, 0.12);    color: color.adjust($info, $lightness: -18%); }
 
 :global(html[data-theme='dark']) .info { background: rgba($info, 0.2); color: #bfdbfe; }
+
+:global(html[data-theme='dark']) {
+  .default { background: #1e293b; color: #cbd5e1; }
+  .success { background: #052e16; color: #bbf7d0; }
+  .warning { background: #422006; color: #fde68a; }
+  .danger { background: #450a0a; color: #fecaca; }
+  .info { background: #172554; color: #bfdbfe; }
+}

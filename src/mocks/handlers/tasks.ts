@@ -10,6 +10,7 @@ import { API, badRequest, forbidden, getRequestUser, notFound } from './utils';
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
 
 type TaskPayload = Pick<ShiftTask, 'title' | 'date' | 'shiftType' | 'department' | 'priority'> &
+  Partial<Pick<ShiftTask, 'section' | 'sortOrder'>> &
   Partial<Pick<ShiftTask, 'description' | 'assigneeId' | 'dueTime'>>;
 
 export const tasksHandlers = [
@@ -54,6 +55,8 @@ export const tasksHandlers = [
     const task: ShiftTask = {
       ...body,
       title: body.title.trim(),
+      section: body.section ?? 'during',
+      sortOrder: body.sortOrder ?? 0,
       id: genId('task'),
       status: 'open',
       createdBy: user.id,
@@ -77,6 +80,44 @@ export const tasksHandlers = [
       );
     }
     return HttpResponse.json(task, { status: 201 });
+  }),
+
+  http.patch(`${API}/tasks/bulk`, async ({ request }) => {
+    await delay(140);
+    const user = getRequestUser(request);
+    if (!user || !hasPermission(user.role, 'tasks.complete')) return forbidden();
+
+    const body = (await request.json()) as { ids?: string[]; status?: 'open' | 'done' };
+    if (!Array.isArray(body.ids) || !body.ids.length || body.ids.length > 500
+      || new Set(body.ids).size !== body.ids.length || !['open', 'done'].includes(body.status ?? '')) {
+      return badRequest('Choose one or more tasks and a valid checklist status.');
+    }
+
+    const tasks = body.ids.map((id) => db.tasks.find((task) => task.id === id));
+    if (tasks.some((task) => !task)) return notFound();
+    const canManage = hasPermission(user.role, 'tasks.manage');
+    if (body.status === 'open' && tasks.some((task) => task?.completedBy && task.completedBy !== user.id && !canManage)) {
+      return forbidden('Only the person who completed a task or a manager can reopen it.');
+    }
+
+    const completedAt = new Date().toISOString();
+    for (const task of tasks) {
+      if (!task) continue;
+      task.status = body.status!;
+      if (body.status === 'done') {
+        task.completedBy = user.id;
+        task.completedByName = user.name;
+        task.completedAt = completedAt;
+        delete task.comment;
+      } else {
+        delete task.completedBy;
+        delete task.completedByName;
+        delete task.completedAt;
+        delete task.comment;
+      }
+    }
+    persistMockCollections();
+    return HttpResponse.json({ updated: tasks.length });
   }),
 
   http.patch(`${API}/tasks/:id`, async ({ params, request }) => {
@@ -135,7 +176,9 @@ export const tasksHandlers = [
 
   http.get(`${API}/task-templates`, async () => {
     await delay(120);
-    return HttpResponse.json(db.taskTemplates);
+    const sectionOrder = { start: 0, during: 1, end: 2 };
+    return HttpResponse.json([...db.taskTemplates].sort((left, right) =>
+      sectionOrder[left.section] - sectionOrder[right.section] || left.sortOrder - right.sortOrder));
   }),
 
   http.post(`${API}/task-templates`, async ({ request }) => {
@@ -143,8 +186,20 @@ export const tasksHandlers = [
     const user = getRequestUser(request);
     if (!user || !hasPermission(user.role, 'tasks.manageTemplates')) return forbidden();
 
-    const body = (await request.json()) as Omit<TaskTemplate, 'id' | 'createdBy'>;
-    const template: TaskTemplate = { ...body, id: genId('tpl'), createdBy: user.id };
+    const body = (await request.json()) as Partial<TaskTemplate>;
+    const template: TaskTemplate = {
+      ...body,
+      section: body.section ?? 'during',
+      sortOrder: body.sortOrder ?? 0,
+      shiftType: 'ANY',
+      weekdays: [],
+      active: true,
+      id: genId('tpl'),
+      createdBy: user.id,
+      title: body.title?.trim() ?? '',
+      department: body.department ?? 'ALL',
+      priority: body.priority ?? 'medium',
+    };
     db.taskTemplates.push(template);
     persistMockCollections();
     return HttpResponse.json(template, { status: 201 });
@@ -157,7 +212,28 @@ export const tasksHandlers = [
 
     const template = db.taskTemplates.find((entry) => entry.id === params.id);
     if (!template) return notFound();
-    Object.assign(template, (await request.json()) as Partial<TaskTemplate>, { id: template.id });
+    const body = (await request.json()) as Partial<TaskTemplate>;
+    Object.assign(template, body, {
+      id: template.id,
+      section: body.section ?? template.section,
+      sortOrder: body.sortOrder ?? template.sortOrder,
+      shiftType: 'ANY',
+      weekdays: [],
+      active: true,
+    });
+    const current = getCurrentSlot();
+    db.tasks.forEach((task) => {
+      if (task.templateId !== template.id || compareSlots({ date: task.date, type: task.shiftType }, current) < 0) return;
+      Object.assign(task, {
+        title: template.title,
+        description: template.description,
+        section: template.section,
+        sortOrder: template.sortOrder,
+        department: template.department,
+        priority: template.priority,
+        dueTime: template.dueTime,
+      });
+    });
     persistMockCollections();
     return HttpResponse.json(template);
   }),
@@ -169,6 +245,10 @@ export const tasksHandlers = [
 
     const idx = db.taskTemplates.findIndex((entry) => entry.id === params.id);
     if (idx === -1) return notFound();
+    const current = getCurrentSlot();
+    db.tasks = db.tasks.filter((task) =>
+      task.templateId !== params.id
+      || compareSlots({ date: task.date, type: task.shiftType }, current) < 0);
     db.taskTemplates.splice(idx, 1);
     persistMockCollections();
     return new HttpResponse(null, { status: 204 });

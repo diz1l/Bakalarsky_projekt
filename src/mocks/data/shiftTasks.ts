@@ -1,20 +1,8 @@
-import type { ShiftTask, TaskTemplate } from '@/types';
-import { parseDateString } from '@/utils/dateUtils';
+import type { ShiftTask } from '@/types';
 import { compareSlots, getCurrentSlot, getNextSlot, getPreviousSlot, type ShiftSlot } from '@/utils/shiftUtils';
 import { db, genId, persistMockCollections } from './db';
 
 const SYSTEM_NAME = 'Staff Manager';
-
-function isoWeekday(date: string): number {
-  const day = parseDateString(date).getDay();
-  return day === 0 ? 7 : day;
-}
-
-export function templateMatchesSlot(template: TaskTemplate, slot: ShiftSlot): boolean {
-  if (!template.active) return false;
-  if (template.shiftType !== 'ANY' && template.shiftType !== slot.type) return false;
-  return !template.weekdays.length || template.weekdays.includes(isoWeekday(slot.date));
-}
 
 // Checklists are generated for the previous shift onwards, so history is not filled with invented tasks.
 export function ensureTemplateTasks(slot: ShiftSlot, now: Date = new Date()): boolean {
@@ -22,7 +10,7 @@ export function ensureTemplateTasks(slot: ShiftSlot, now: Date = new Date()): bo
 
   let created = false;
   for (const template of db.taskTemplates) {
-    if (!templateMatchesSlot(template, slot)) continue;
+    if (!template.active) continue;
     const exists = db.tasks.some(
       (task) => task.templateId === template.id && task.date === slot.date && task.shiftType === slot.type,
     );
@@ -37,6 +25,8 @@ export function ensureTemplateTasks(slot: ShiftSlot, now: Date = new Date()): bo
       date: slot.date,
       shiftType: slot.type,
       department: template.department,
+      section: template.section ?? 'during',
+      sortOrder: template.sortOrder ?? 0,
       priority: template.priority,
       dueTime: template.dueTime,
       status: 'open',
@@ -66,6 +56,7 @@ export function carryOverUnfinishedTasks(now: Date = new Date()): ShiftTask[] {
       id: genId('task'),
       date: next.date,
       shiftType: next.type,
+      section: task.section ?? 'during',
       carriedOverFrom: task.id,
       createdAt: now.toISOString(),
     };

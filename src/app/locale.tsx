@@ -37,6 +37,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'Unable to load notifications': 'Oznámení se nepodařilo načíst', 'Check your connection and try again.': 'Zkontrolujte připojení a zkuste to znovu.', 'Try again': 'Zkusit znovu', 'shift': 'směna', 'task': 'úkol', 'handover': 'předání', 'announcement': 'oznámení', 'employee': 'zaměstnanec',
     'shift overlap warning': 'V příštích 7 dnech se překrývá {count} směn.', 'low staffing warning': 'Nízký počet zaměstnanců v {count} dnech ({days}).', 'warning notifications': '{count} varovných oznámení vyžaduje pozornost.',
     'Profile updated for current session': 'Profil pro aktuální relaci byl aktualizován', 'Unable to update profile': 'Profil se nepodařilo aktualizovat', 'Password updated successfully': 'Heslo bylo aktualizováno', 'Unable to update password': 'Heslo se nepodařilo aktualizovat', 'Profile settings sync with your account.': 'Nastavení profilu se synchronizuje s vaším účtem.',
+    'At the start of shift': 'Na začátku směny', 'During the shift': 'Během směny', 'At the end of shift': 'Na konci směny',
+    'Checklist chapter': 'Kapitola kontrolního seznamu', 'The same checklist is used for every day and shift. Progress is tracked separately for each shift.': 'Stejný kontrolní seznam se používá každý den a směnu. Průběh se sleduje samostatně pro každou směnu.',
+    'No checklist items in this chapter yet.': 'V této kapitole zatím nejsou žádné položky.', 'Unable to load checklist': 'Kontrolní seznam nelze načíst', 'Loading checklist': 'Načítání seznamu',
+    'Check all': 'Označit vše', 'Uncheck all': 'Zrušit všechna označení', 'All checklist items checked': 'Všechny položky byly označeny', 'All checklist items unchecked': 'Všechna označení byla zrušena', 'Checklist item deleted': 'Položka seznamu byla odstraněna',
   },
   ru: {
     ...shiftOpsRu,
@@ -71,6 +75,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     'Unable to load notifications': 'Не удалось загрузить уведомления', 'Check your connection and try again.': 'Проверьте подключение и попробуйте ещё раз.', 'Try again': 'Повторить', 'shift': 'смена', 'task': 'задача', 'handover': 'передача смены', 'announcement': 'объявление', 'employee': 'сотрудник',
     'shift overlap warning': 'В ближайшие 7 дней пересекаются смены: {count}.', 'low staffing warning': 'Недостаточно сотрудников в {count} дней ({days}).', 'warning notifications': 'Требуют внимания уведомления с предупреждением: {count}.',
     'Profile updated for current session': 'Профиль обновлён', 'Unable to update profile': 'Не удалось обновить профиль', 'Password updated successfully': 'Пароль обновлён', 'Unable to update password': 'Не удалось изменить пароль', 'Profile settings sync with your account.': 'Настройки профиля синхронизируются с аккаунтом.',
+    'At the start of shift': 'В начале смены', 'During the shift': 'Во время смены', 'At the end of shift': 'В конце смены',
+    'Checklist chapter': 'Раздел чек-листа', 'The same checklist is used for every day and shift. Progress is tracked separately for each shift.': 'Один и тот же чек-лист используется каждый день и в каждую смену. Выполнение учитывается отдельно по сменам.',
+    'No checklist items in this chapter yet.': 'В этом разделе пока нет пунктов.', 'Unable to load checklist': 'Не удалось загрузить чек-лист', 'Loading checklist': 'Загрузка чек-листа',
+    'Check all': 'Отметить всё', 'Uncheck all': 'Снять все отметки', 'All checklist items checked': 'Все пункты чек-листа отмечены', 'All checklist items unchecked': 'Все отметки сняты', 'Checklist item deleted': 'Пункт чек-листа удалён',
   },
 };
 export const LocaleContext = createContext<{ locale: Locale; setLocale: (locale: Locale) => void }>({ locale: 'en', setLocale: () => undefined });

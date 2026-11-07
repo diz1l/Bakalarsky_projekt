@@ -8,6 +8,7 @@ import {
   useGetTaskTemplatesQuery,
   useUpdateTaskTemplateMutation,
 } from '../api/tasksApi';
+import { CHECKLIST_SECTIONS } from '../checklist';
 import { useLocale } from '@/app/locale';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button/Button';
@@ -19,25 +20,24 @@ import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { SHIFT_DEPARTMENTS, toOptions } from '@/utils/departments';
-import type { TaskTemplate } from '@/types';
+import type { ChecklistSection, TaskTemplate } from '@/types';
 import s from './TasksPage.module.scss';
-
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const templateSchema = z.object({
   title: z.string().trim().min(1, 'Title is required'),
-  shiftType: z.enum(['DAY', 'NIGHT', 'ANY']),
+  section: z.enum(['start', 'during', 'end']),
   department: z.string().min(1),
   priority: z.enum(['low', 'medium', 'high']),
   dueTime: z.string().optional(),
-  weekdays: z.array(z.string()).optional(),
 });
 type TemplateFormData = z.infer<typeof templateSchema>;
+
+const sectionOrder: Record<ChecklistSection, number> = { start: 0, during: 1, end: 2 };
 
 export function TaskTemplatesPanel() {
   const { t } = useLocale();
   const { showToast } = useToast();
-  const { data: templates = [] } = useGetTaskTemplatesQuery();
+  const { data: templates = [], isLoading, isError } = useGetTaskTemplatesQuery();
   const [createTemplate, { isLoading: creating }] = useCreateTaskTemplateMutation();
   const [updateTemplate, { isLoading: updating }] = useUpdateTaskTemplateMutation();
   const [deleteTemplate, { isLoading: removing }] = useDeleteTaskTemplateMutation();
@@ -53,24 +53,31 @@ export function TaskTemplatesPanel() {
     setEditing(template);
     reset({
       title: template?.title ?? '',
-      shiftType: template?.shiftType ?? 'ANY',
+      section: template?.section ?? 'during',
       department: template?.department ?? SHIFT_DEPARTMENTS[0],
       priority: template?.priority ?? 'medium',
       dueTime: template?.dueTime ?? '',
-      weekdays: template?.weekdays.map(String) ?? [],
     });
     setModalOpen(true);
   };
 
-  const toPayload = (data: TemplateFormData) => ({
-    title: data.title,
-    shiftType: data.shiftType,
-    department: data.department,
-    priority: data.priority,
-    dueTime: data.dueTime || undefined,
-    weekdays: (data.weekdays ?? []).map(Number).sort(),
-    active: editing?.active ?? true,
-  });
+  const toPayload = (data: TemplateFormData) => {
+    const section = templates.filter((template) => template.section === data.section);
+    const sortOrder = editing?.section === data.section
+      ? editing.sortOrder
+      : Math.max(0, ...section.map((template) => template.sortOrder ?? 0)) + 1;
+    return {
+      title: data.title,
+      section: data.section,
+      sortOrder,
+      shiftType: 'ANY' as const,
+      department: data.department,
+      priority: data.priority,
+      dueTime: data.dueTime || undefined,
+      weekdays: [],
+      active: true,
+    };
+  };
 
   const onSubmit = async (data: TemplateFormData) => {
     try {
@@ -83,58 +90,72 @@ export function TaskTemplatesPanel() {
     }
   };
 
-  const toggleActive = async (template: TaskTemplate) => {
+  const removeTemplate = async () => {
+    if (!deleting) return;
     try {
-      await updateTemplate({
-        id: template.id,
-        title: template.title,
-        description: template.description,
-        shiftType: template.shiftType,
-        department: template.department,
-        weekdays: template.weekdays,
-        dueTime: template.dueTime,
-        priority: template.priority,
-        active: !template.active,
-      }).unwrap();
+      await deleteTemplate(deleting.id).unwrap();
+      showToast(t('Checklist item deleted'), 'success');
+      setDeleting(null);
     } catch {
       showToast(t('Operation failed'), 'error');
     }
   };
 
-  const describeDays = (weekdays: number[]) =>
-    weekdays.length ? weekdays.map((day) => t(WEEKDAYS[day - 1])).join(', ') : t('Every day');
+  const sortedTemplates = [...templates].sort(
+    (left, right) => sectionOrder[left.section ?? 'during'] - sectionOrder[right.section ?? 'during']
+      || (left.sortOrder ?? 0) - (right.sortOrder ?? 0),
+  );
+
+  if (isError) {
+    return <EmptyState title={t('Unable to load checklist')} message={t('Refresh the page and try again.')} />;
+  }
 
   return (
     <div>
       <div className={s.summary}>
-        <p className={s.modalText}>{t('Recurring checklists are added automatically to every matching shift.')}</p>
+        <p className={s.modalText}>{t('The same checklist is used for every day and shift. Progress is tracked separately for each shift.')}</p>
         <Button onClick={() => open(null)}>+ {t('New checklist item')}</Button>
       </div>
 
-      {!templates.length ? (
+      {isLoading ? (
+        <p className={s.modalText}>{t('Loading checklist')}…</p>
+      ) : !templates.length ? (
         <EmptyState title={t('No recurring checklists')} message={t('Create the first item, e.g. “Count the cash register”.')} />
       ) : (
-        <ul className={s.list}>
-          {templates.map((template) => (
-            <li key={template.id} className={`${s.task} ${template.active ? '' : s.taskDone}`}>
-              <div className={s.taskBody}>
-                <div className={s.taskTitle}>{template.title}</div>
-                <div className={s.taskMeta}>
-                  <Badge variant="info">{template.shiftType === 'ANY' ? t('Every shift') : t(template.shiftType === 'DAY' ? 'Day shift' : 'Night shift')}</Badge>
-                  <span>{template.department === 'ALL' ? t('All departments') : t(template.department)}</span>
-                  <span>{describeDays(template.weekdays)}</span>
-                  {template.dueTime && <span>⏰ {t('until')} {template.dueTime}</span>}
-                  {!template.active && <Badge variant="default">{t('Paused')}</Badge>}
-                </div>
-              </div>
-              <div className={s.taskActions}>
-                <Button variant="ghost" size="sm" onClick={() => void toggleActive(template)}>{template.active ? t('Pause') : t('Resume')}</Button>
-                <Button variant="ghost" size="sm" onClick={() => open(template)}>{t('Edit')}</Button>
-                <Button variant="ghost" size="sm" aria-label={`${t('Delete')}: ${template.title}`} onClick={() => setDeleting(template)}>✕</Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div className={s.checklistSections}>
+          {CHECKLIST_SECTIONS.map((section) => {
+            const items = sortedTemplates.filter((template) => (template.section ?? 'during') === section.value);
+            return (
+              <section key={section.value} className={s.templateSection}>
+                <h2 className={s.sectionTitle}>{t(section.label)}</h2>
+                {items.length ? (
+                  <ul className={s.list}>
+                    {items.map((template) => (
+                      <li key={template.id} className={s.task}>
+                        <div className={s.taskBody}>
+                          <div className={s.taskTitle}>{template.title}</div>
+                          <div className={s.taskMeta}>
+                            <Badge variant="info">{t(template.department === 'ALL' ? 'All departments' : template.department)}</Badge>
+                            <Badge variant={template.priority === 'high' ? 'danger' : template.priority === 'medium' ? 'warning' : 'success'}>
+                              {t(template.priority)}
+                            </Badge>
+                            {template.dueTime && <span>⏰ {t('until')} {template.dueTime}</span>}
+                          </div>
+                        </div>
+                        <div className={s.taskActions}>
+                          <Button variant="ghost" size="sm" onClick={() => open(template)}>{t('Edit')}</Button>
+                          <Button variant="ghost" size="sm" aria-label={`${t('Delete')}: ${template.title}`} onClick={() => setDeleting(template)}>✕</Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className={s.emptySection}>{t('No checklist items in this chapter yet.')}</p>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? t('Edit checklist item') : t('New checklist item')}>
@@ -142,14 +163,12 @@ export function TaskTemplatesPanel() {
           <FormField label={t('Task')} error={errors.title && t(errors.title.message ?? '')} required>
             <Input {...register('title')} error={!!errors.title} />
           </FormField>
-          <div className={s.formRow}>
-            <FormField label={t('Shift')}>
-              <Select {...register('shiftType')} options={[{ value: 'ANY', label: t('Every shift') }, { value: 'DAY', label: t('Day shift') }, { value: 'NIGHT', label: t('Night shift') }]} />
-            </FormField>
-            <FormField label={t('Department')}>
-              <Select {...register('department')} options={[...toOptions(SHIFT_DEPARTMENTS, t), { value: 'ALL', label: t('All departments') }]} />
-            </FormField>
-          </div>
+          <FormField label={t('Checklist chapter')}>
+            <Select {...register('section')} options={CHECKLIST_SECTIONS.map((section) => ({ value: section.value, label: t(section.label) }))} />
+          </FormField>
+          <FormField label={t('Department')}>
+            <Select {...register('department')} options={[...toOptions(SHIFT_DEPARTMENTS, t), { value: 'ALL', label: t('All departments') }]} />
+          </FormField>
           <div className={s.formRow}>
             <FormField label={t('Priority')}>
               <Select {...register('priority')} options={[{ value: 'low', label: t('low') }, { value: 'medium', label: t('medium') }, { value: 'high', label: t('high') }]} />
@@ -158,16 +177,6 @@ export function TaskTemplatesPanel() {
               <Input type="time" {...register('dueTime')} />
             </FormField>
           </div>
-          <FormField label={t('Days (none selected = every day)')}>
-            <div className={s.weekdays}>
-              {WEEKDAYS.map((day, index) => (
-                <label key={day}>
-                  <input type="checkbox" value={String(index + 1)} {...register('weekdays')} />
-                  <span>{t(day)}</span>
-                </label>
-              ))}
-            </div>
-          </FormField>
           <div className={s.formActions}>
             <Button variant="secondary" type="button" onClick={() => setModalOpen(false)}>{t('Cancel')}</Button>
             <Button type="submit" loading={creating || updating}>{t('Save')}</Button>
@@ -182,10 +191,7 @@ export function TaskTemplatesPanel() {
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         loading={removing}
-        onConfirm={() => {
-          if (!deleting) return;
-          void deleteTemplate(deleting.id).unwrap().then(() => setDeleting(null)).catch(() => showToast(t('Operation failed'), 'error'));
-        }}
+        onConfirm={() => void removeTemplate()}
         onClose={() => setDeleting(null)}
       />
     </div>

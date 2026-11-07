@@ -84,14 +84,14 @@
 
 .completedTitle {
   text-decoration: line-through;
-  color: $text-light;
+  color: $text-secondary;
 }
 
 .meta {
   display: flex;
   gap: 16px;
   font-size: 0.75rem;
-  color: $text-light;
+  color: $text-secondary;
 }
 
 .actions {
@@ -192,3 +192,11 @@
 :global(html[data-theme='dark']) .card { background:#111827; color:#e5e7eb; border-color:#334155; }
 :global(html[data-theme='dark']) .meta,
 :global(html[data-theme='dark']) .content { color:#cbd5e1; }
+:global(html[data-theme='dark']) .filterBtn {
+  background:#1e293b;
+  border-color:#475569;
+  color:#cbd5e1;
+}
+:global(html[data-theme='dark']) .activeFilter { border-color:#818cf8; color:#c7d2fe; }
+:global(html[data-theme='dark']) .doneToggle { color:#cbd5e1; }
+:global(html[data-theme='dark']) .actions { border-color:#334155; }

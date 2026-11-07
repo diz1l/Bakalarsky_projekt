@@ -8,7 +8,9 @@ import {
   useDeleteTaskMutation,
   useGetTasksQuery,
   useUpdateTaskMutation,
+  useUpdateTasksBulkMutation,
 } from '../api/tasksApi';
+import { CHECKLIST_SECTIONS } from '../checklist';
 import { TaskTemplatesPanel } from './TaskTemplatesPanel';
 import { useGetEmployeesQuery } from '@/features/employees/api/employeesApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +44,7 @@ import s from './TasksPage.module.scss';
 const taskSchema = z.object({
   title: z.string().trim().min(1, 'Title is required'),
   description: z.string().optional(),
+  section: z.enum(['start', 'during', 'end']),
   department: z.string().min(1),
   assigneeId: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high']),
@@ -79,13 +82,16 @@ export function TasksPage() {
   );
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask] = useUpdateTaskMutation();
+  const [updateTasksBulk, { isLoading: bulkUpdating }] = useUpdateTasksBulkMutation();
   const [deleteTask, { isLoading: removing }] = useDeleteTaskMutation();
 
   const isCurrent = isSameSlot(slot, currentSlot);
   const isPast = compareSlots(slot, currentSlot) < 0;
   const canAddHere = can('tasks.create') && (canManage || isCurrent || isSameSlot(slot, getNextSlot(currentSlot)));
-  const done = tasks.filter((task) => task.status !== 'open').length;
+  const done = tasks.filter((task) => task.status === 'done').length;
   const progress = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+  const checkableTasks = tasks.filter((task) => task.status !== 'skipped');
+  const allChecked = checkableTasks.length > 0 && checkableTasks.every((task) => task.status === 'done');
   const now = new Date();
 
   const employeeNames = new Map(employees.map((employee) => [employee.id, `${employee.firstName} ${employee.lastName}`]));
@@ -99,6 +105,7 @@ export function TasksPage() {
     reset({
       title: '',
       description: '',
+      section: 'during',
       department: ownDepartment || departmentFilter || SHIFT_DEPARTMENTS[0],
       assigneeId: '',
       priority: 'medium',
@@ -114,6 +121,10 @@ export function TasksPage() {
       await createTask({
         title: data.title,
         description: data.description || undefined,
+        section: data.section,
+        sortOrder: Math.max(0, ...tasks
+          .filter((task) => (task.section ?? 'during') === data.section)
+          .map((task) => task.sortOrder ?? 0)) + 1,
         department: data.department,
         assigneeId: data.assigneeId || undefined,
         priority: data.priority,
@@ -131,6 +142,20 @@ export function TasksPage() {
   const toggleDone = async (task: ShiftTask) => {
     try {
       await updateTask({ id: task.id, status: task.status === 'open' ? 'done' : 'open' }).unwrap();
+    } catch (error) {
+      showToast((error as { data?: { message?: string } }).data?.message ?? t('Operation failed'), 'error');
+    }
+  };
+
+  const toggleAll = async () => {
+    const status = allChecked ? 'open' : 'done';
+    const ids = checkableTasks
+      .filter((task) => task.status !== status)
+      .map((task) => task.id);
+    if (!ids.length) return;
+    try {
+      await updateTasksBulk({ ids, status }).unwrap();
+      showToast(t(status === 'done' ? 'All checklist items checked' : 'All checklist items unchecked'), 'success');
     } catch (error) {
       showToast((error as { data?: { message?: string } }).data?.message ?? t('Operation failed'), 'error');
     }
@@ -195,6 +220,16 @@ export function TasksPage() {
               <div className={s.progress}><span style={{ width: `${progress}%` }} /></div>
             </div>
             <div className={s.summaryActions}>
+              {can('tasks.complete') && (
+                <Button
+                  variant="secondary"
+                  onClick={() => void toggleAll()}
+                  disabled={!checkableTasks.length || bulkUpdating}
+                  loading={bulkUpdating}
+                >
+                  {t(allChecked ? 'Uncheck all' : 'Check all')}
+                </Button>
+              )}
               {canManage || !ownDepartment ? (
                 <Select
                   aria-label={t('Department')}
@@ -215,7 +250,16 @@ export function TasksPage() {
             <EmptyState title={t('No tasks for this shift')} message={canAddHere ? t('Add a task so the shift does not forget it.') : t('Nothing was planned for this shift.')} />
           ) : (
             <ul className={s.list}>
-              {tasks.map((task) => {
+              {CHECKLIST_SECTIONS.flatMap((section) => {
+                const sectionTasks = tasks
+                  .filter((task) => (task.section ?? 'during') === section.value)
+                  .sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0));
+                if (!sectionTasks.length) return [];
+                return [
+                  <li key={`section-${section.value}`} className={s.sectionHeading}>
+                    <h2>{t(section.label)}</h2>
+                  </li>,
+                  ...sectionTasks.map((task) => {
                 const overdue = task.status === 'open' && !!task.dueTime && slotTimeToDate(slot, task.dueTime) < now;
                 const canDelete = canManage || task.createdBy === user?.id;
                 return (
@@ -225,7 +269,7 @@ export function TasksPage() {
                         type="checkbox"
                         aria-label={`${t('Mark as done')}: ${task.title}`}
                         checked={task.status === 'done'}
-                        disabled={!can('tasks.complete') || task.status === 'skipped'}
+                        disabled={!can('tasks.complete') || task.status === 'skipped' || bulkUpdating}
                         onChange={() => void toggleDone(task)}
                       />
                       <span />
@@ -264,6 +308,8 @@ export function TasksPage() {
                     </div>
                   </li>
                 );
+                  }),
+                ];
               })}
             </ul>
           )}
@@ -277,6 +323,9 @@ export function TasksPage() {
           </FormField>
           <FormField label={t('Details')}>
             <Textarea rows={3} {...register('description')} />
+          </FormField>
+          <FormField label={t('Checklist chapter')}>
+            <Select {...register('section')} options={CHECKLIST_SECTIONS.map((section) => ({ value: section.value, label: t(section.label) }))} />
           </FormField>
           <FormField label={t('Shift')}>
             <Select

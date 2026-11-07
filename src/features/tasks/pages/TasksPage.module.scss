@@ -24,7 +24,7 @@
   padding: 1px 8px;
   border-radius: $radius-full;
   background: rgba($success, 0.14);
-  color: #047857;
+  color: #065f46;
   font-size: 0.72rem;
   font-weight: 600;
 }
@@ -63,6 +63,7 @@
 .summaryActions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 
   select { min-width: 170px; }
@@ -95,6 +96,25 @@
 }
 
 .list { display: flex; flex-direction: column; gap: 10px; }
+
+.sectionHeading {
+  margin: 14px 0 0;
+  padding: 8px 2px 2px;
+  list-style: none;
+
+  h2 {
+    color: $text-secondary;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+.checklistSections { display: grid; gap: 22px; }
+.templateSection { min-width: 0; }
+.sectionTitle { margin: 0 0 10px; font-size: 1rem; }
+.emptySection { color: $text-secondary; font-size: 0.875rem; padding: 8px 0; }
 
 .task {
   display: flex;
@@ -211,6 +231,20 @@
 }
 
 :global(html[data-theme='dark']) {
-  .task { background: #111827; border-color: #263244; }
+  .task { background: #111827; border-color: #334155; color: #e5e7eb; }
+  .taskDone { opacity: 1; }
   .progress { background: #263244; }
+  .subtitle, .progressLabel { color: #aebbd0; }
+  .progressLabel strong { color: #f8fafc; }
+  .nowBadge { background: #064e3b; color: #a7f3d0; }
+  .sectionHeading h2, .sectionTitle { color: #cbd5e1; }
+  .emptySection, .modalText, .taskMeta, .completedInfo, .taskDescription { color: #aebbd0; }
+  .overdue { color: #fca5a5; }
+  .check span { border-color: #94a3b8; }
+  .tabs { border-color: #334155; }
+  .tab { color: #cbd5e1; &:hover { color: #f8fafc; } }
+  .activeTab { color: #93c5fd; }
+  .weekdays label { color: #e5e7eb; border-color: #475569; }
+  .slotNav button { color: #cbd5e1; }
+  .taskActions button { color: #cbd5e1; }
 }

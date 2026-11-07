@@ -11,25 +11,20 @@ export const taskTemplatesRouter = Router();
 
 const priority = z.enum(['low', 'medium', 'high']);
 const shiftType = z.enum(['DAY', 'NIGHT']);
-
-function isoWeekday(date: string) {
-  const day = new Date(`${date}T12:00:00Z`).getUTCDay();
-  return day === 0 ? 7 : day;
-}
+const checklistSection = z.enum(['start', 'during', 'end']);
 
 // Checklists are generated lazily from the previous shift onwards; the unique key keeps it idempotent.
 export async function ensureTemplateTasks(slot: ShiftSlot) {
   if (compareSlots(slot, getPreviousSlot(getCurrentSlot())) < 0) return;
-  const templates = await prisma.taskTemplate.findMany({ where: { active: true, shiftType: { in: ['ANY', slot.type] } } });
+  const templates = await prisma.taskTemplate.findMany({ where: { active: true } });
   for (const template of templates) {
-    const weekdays = template.weekdays ? template.weekdays.split(',').map(Number) : [];
-    if (weekdays.length && !weekdays.includes(isoWeekday(slot.date))) continue;
     await prisma.shiftTask.upsert({
       where: { templateId_date_shiftType: { templateId: template.id, date: slot.date, shiftType: slot.type } },
       update: {},
       create: {
         templateId: template.id, title: template.title, description: template.description, date: slot.date, shiftType: slot.type,
-        department: template.department, priority: template.priority, dueTime: template.dueTime,
+        department: template.department, section: template.section, sortOrder: template.sortOrder,
+        priority: template.priority, dueTime: template.dueTime,
         createdBy: template.createdBy, createdByName: 'Staff Manager',
       },
     });
@@ -74,7 +69,8 @@ tasksRouter.get('/', requirePermission('tasks.view'), async (req, res) => {
 tasksRouter.post('/', requirePermission('tasks.create'), async (req, res) => {
   const data = z.object({
     title: z.string().trim().min(1), description: z.string().optional(), date: z.string(), shiftType,
-    department: z.string(), assigneeId: z.string().optional(), priority, dueTime: z.string().optional(),
+    department: z.string(), section: checklistSection.default('during'), sortOrder: z.number().int().min(0).default(0),
+    assigneeId: z.string().optional(), priority, dueTime: z.string().optional(),
   }).parse(req.body);
 
   if (!can(req, 'tasks.manage')) {
@@ -94,11 +90,35 @@ tasksRouter.post('/', requirePermission('tasks.create'), async (req, res) => {
   res.status(201).json(task);
 });
 
+tasksRouter.patch('/bulk', requirePermission('tasks.complete'), async (req, res) => {
+  const body = z.object({
+    ids: z.array(z.string().min(1)).min(1).max(500).refine((ids) => new Set(ids).size === ids.length),
+    status: z.enum(['open', 'done']),
+  }).parse(req.body);
+  const tasks = await prisma.shiftTask.findMany({ where: { id: { in: body.ids } } });
+  if (tasks.length !== body.ids.length) throw notFound();
+
+  const canManage = can(req, 'tasks.manage');
+  if (body.status === 'open' && tasks.some((task) => task.completedBy && task.completedBy !== req.user!.id && !canManage)) {
+    throw forbidden('Only the person who completed a task or a manager can reopen it.');
+  }
+
+  const completedAt = new Date();
+  await prisma.$transaction(tasks.map((task) => prisma.shiftTask.update({
+    where: { id: task.id },
+    data: body.status === 'done'
+      ? { status: 'done', completedBy: req.user!.id, completedByName: req.user!.name, completedAt, comment: null }
+      : { status: 'open', completedBy: null, completedByName: null, completedAt: null, comment: null },
+  })));
+  res.json({ updated: tasks.length });
+});
+
 tasksRouter.patch('/:id', requirePermission('tasks.complete'), async (req, res) => {
   const body = z.object({
     status: z.enum(['open', 'done', 'skipped']).optional(), comment: z.string().optional(),
     title: z.string().min(1).optional(), description: z.string().optional(), priority: priority.optional(),
     dueTime: z.string().optional(), assigneeId: z.string().optional(), department: z.string().optional(),
+    section: checklistSection.optional(), sortOrder: z.number().int().min(0).optional(),
   }).parse(req.body);
   const task = await prisma.shiftTask.findUnique({ where: { id: idParam(req) } });
   if (!task) throw notFound();
@@ -131,10 +151,28 @@ tasksRouter.delete('/:id', requirePermission('tasks.create'), async (req, res) =
 });
 
 const templateSchema = z.object({
-  title: z.string().trim().min(1), description: z.string().optional(), shiftType: z.enum(['DAY', 'NIGHT', 'ANY']),
+  title: z.string().trim().min(1), description: z.string().optional(),
+  section: checklistSection.default('during'), sortOrder: z.number().int().min(0).default(0),
+  shiftType: z.enum(['DAY', 'NIGHT', 'ANY']).default('ANY'),
   department: z.string(), weekdays: z.array(z.number().int().min(1).max(7)).default([]), dueTime: z.string().optional(),
   priority, active: z.boolean().default(true),
 });
+
+const normalizeTemplateInput = (input: unknown) => {
+  const parsed = templateSchema.parse(input);
+  return {
+    title: parsed.title,
+    description: parsed.description,
+    section: parsed.section,
+    sortOrder: parsed.sortOrder,
+    department: parsed.department,
+    dueTime: parsed.dueTime,
+    priority: parsed.priority,
+    active: true,
+    shiftType: 'ANY',
+    weekdays: '',
+  };
+};
 
 const toTemplate = <T extends { weekdays: string }>(template: T) => ({
   ...template, weekdays: template.weekdays ? template.weekdays.split(',').map(Number) : [],
@@ -145,18 +183,47 @@ taskTemplatesRouter.get('/', requirePermission('tasks.view'), async (_req, res) 
 });
 
 taskTemplatesRouter.post('/', requirePermission('tasks.manageTemplates'), async (req, res) => {
-  const { weekdays, ...data } = templateSchema.parse(req.body);
-  const template = await prisma.taskTemplate.create({ data: { ...data, weekdays: weekdays.join(','), createdBy: req.user!.id } });
+  const template = await prisma.taskTemplate.create({
+    data: { ...normalizeTemplateInput(req.body), createdBy: req.user!.id },
+  });
   res.status(201).json(toTemplate(template));
 });
 
 taskTemplatesRouter.put('/:id', requirePermission('tasks.manageTemplates'), async (req, res) => {
-  const { weekdays, ...data } = templateSchema.parse(req.body);
-  const template = await prisma.taskTemplate.update({ where: { id: idParam(req) }, data: { ...data, weekdays: weekdays.join(',') } });
+  const data = normalizeTemplateInput(req.body);
+  const templateId = idParam(req);
+  const current = getCurrentSlot();
+  const template = await prisma.$transaction(async (transaction) => {
+    const updated = await transaction.taskTemplate.update({
+      where: { id: templateId },
+      data,
+    });
+    const tasks = await transaction.shiftTask.findMany({ where: { templateId } });
+    await Promise.all(tasks
+      .filter((task) => compareSlots({ date: task.date, type: task.shiftType as 'DAY' | 'NIGHT' }, current) >= 0)
+      .map((task) => transaction.shiftTask.update({
+        where: { id: task.id },
+        data: {
+          title: updated.title, description: updated.description, section: updated.section,
+          sortOrder: updated.sortOrder, department: updated.department, priority: updated.priority,
+          dueTime: updated.dueTime,
+        },
+      })));
+    return updated;
+  });
   res.json(toTemplate(template));
 });
 
 taskTemplatesRouter.delete('/:id', requirePermission('tasks.manageTemplates'), async (req, res) => {
-  await prisma.taskTemplate.delete({ where: { id: idParam(req) } });
+  const templateId = idParam(req);
+  const current = getCurrentSlot();
+  const tasks = await prisma.shiftTask.findMany({ where: { templateId } });
+  const upcomingIds = tasks
+    .filter((task) => compareSlots({ date: task.date, type: task.shiftType as 'DAY' | 'NIGHT' }, current) >= 0)
+    .map((task) => task.id);
+  await prisma.$transaction([
+    ...(upcomingIds.length ? [prisma.shiftTask.deleteMany({ where: { id: { in: upcomingIds } } })] : []),
+    prisma.taskTemplate.delete({ where: { id: templateId } }),
+  ]);
   res.status(204).end();
 });

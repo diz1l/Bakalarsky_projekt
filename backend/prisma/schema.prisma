@@ -131,6 +131,8 @@ model TaskTemplate {
   id          String  @id @default(cuid())
   title       String
   description String?
+  section     String  @default("during")
+  sortOrder   Int     @default(0)
   shiftType   String // DAY | NIGHT | ANY
   department  String // department name or ALL
   weekdays    String  @default("") // comma separated ISO weekdays, empty = every day
@@ -151,6 +153,8 @@ model ShiftTask {
   date            String
   shiftType       String
   department      String
+  section         String        @default("during")
+  sortOrder       Int           @default(0)
   assigneeId      String?
   priority        String        @default("medium")
   dueTime         String?

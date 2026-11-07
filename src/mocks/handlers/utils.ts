@@ -1,7 +1,7 @@
 import { HttpResponse } from 'msw';
 import { db } from '../data/db';
 
-export const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+export { API_BASE_URL as API } from '@/app/apiConfig';
 
 const TOKEN_PREFIX = 'Bearer mock-jwt-';
 

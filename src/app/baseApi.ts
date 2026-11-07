@@ -1,12 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-const baseUrl = import.meta.env.VITE_API_URL
-  ?? (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+import { API_BASE_URL } from './apiConfig';
 
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl,
+    baseUrl: API_BASE_URL,
     fetchFn: (input, init) => {
       if (!init) return fetch(input);
       const requestInit: RequestInit = { ...init };

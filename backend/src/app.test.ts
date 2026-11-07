@@ -2,10 +2,20 @@ import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from './app.js';
 import { signToken } from './middleware/auth.js';
+import { hasPermission, type Role } from './lib/permissions.js';
 
 const app = createApp();
 
 describe('HTTP API', () => {
+  it.each([
+    ['ADMIN', true],
+    ['MANAGER', true],
+    ['EMPLOYEE', false],
+    ['GUEST', false],
+  ] as const)('%s checklist template permission is %s', (role: Role, allowed) => {
+    expect(hasPermission(role, 'tasks.manageTemplates')).toBe(allowed);
+  });
+
   it('returns a healthy status without a database request', async () => {
     const response = await request(app).get('/api/health');
     expect(response.status).toBe(200);
@@ -52,5 +62,19 @@ describe('HTTP API', () => {
       .set('Authorization', `Bearer ${managerToken}`)
       .send({ employeeId: 'employee-1', login: 'employee.login' });
     expect(response.status).toBe(403);
+  });
+
+  it('validates bulk checklist updates before accessing task records', async () => {
+    const employeeToken = signToken({
+      id: 'employee-1',
+      name: 'Employee',
+      email: 'employee@example.com',
+      role: 'EMPLOYEE',
+    });
+    const response = await request(app)
+      .patch('/api/tasks/bulk')
+      .set('Authorization', `Bearer ${employeeToken}`)
+      .send({ ids: [], status: 'done' });
+    expect(response.status).toBe(400);
   });
 });

@@ -90,11 +90,14 @@ export interface ScheduleRequest {
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'open' | 'done' | 'skipped';
+export type ChecklistSection = 'start' | 'during' | 'end';
 
 export interface TaskTemplate {
   id: string;
   title: string;
   description?: string;
+  section: ChecklistSection;
+  sortOrder: number;
   shiftType: ShiftType | 'ANY';
   department: string;
   weekdays: number[];
@@ -112,6 +115,8 @@ export interface ShiftTask {
   date: string;
   shiftType: ShiftType;
   department: string;
+  section: ChecklistSection;
+  sortOrder: number;
   assigneeId?: string;
   priority: TaskPriority;
   dueTime?: string;

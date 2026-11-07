@@ -15,11 +15,13 @@ import type { ChangePasswordFormData } from '../schemas/changePasswordSchema';
 import { profileInfoSchema } from '../schemas/profileInfoSchema';
 import type { ProfileInfoFormData } from '../schemas/profileInfoSchema';
 import s from './ProfilePage.module.scss';
+import { useLocale } from '@/app/locale';
 
 export function ProfilePage() {
   const { user } = useAuth();
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
+  const { t } = useLocale();
 
   const [updateProfile, { isLoading: isSavingProfile }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
@@ -62,9 +64,9 @@ export function ProfilePage() {
           email: updatedUser.email,
         }),
       );
-      showToast('Profile updated for current session', 'success');
+      showToast(t('Profile updated for current session'), 'success');
     } catch {
-      showToast('Unable to update profile', 'error');
+      showToast(t('Unable to update profile'), 'error');
     }
   };
 
@@ -72,15 +74,15 @@ export function ProfilePage() {
     try {
       await changePassword({ oldPassword: data.oldPassword, newPassword: data.newPassword }).unwrap();
       passwordForm.reset({ oldPassword: '', newPassword: '', confirmPassword: '' });
-      showToast('Password updated in mock mode', 'success');
+      showToast(t('Password updated successfully'), 'success');
     } catch {
-      showToast('Unable to update password', 'error');
+      showToast(t('Unable to update password'), 'error');
     }
   };
 
   return (
     <div>
-      <h1 className={s.title}>Profile</h1>
+      <h1 className={s.title}>{t('Profile')}</h1>
 
       <div className={s.card}>
         <div className={s.avatar}>{user.name.charAt(0).toUpperCase()}</div>
@@ -96,23 +98,23 @@ export function ProfilePage() {
 
       <div className={s.formsGrid}>
         <section className={s.panel}>
-          <h3>Profile info</h3>
+          <h3>{t('Profile info')}</h3>
           <form onSubmit={profileForm.handleSubmit(onSubmitProfile)}>
-            <FormField label="Full name" error={profileForm.formState.errors.name?.message} required>
+            <FormField label={t('Full name')} error={profileForm.formState.errors.name?.message} required>
               <Input
                 placeholder="John Admin"
                 {...profileForm.register('name')}
                 error={!!profileForm.formState.errors.name}
               />
             </FormField>
-            <FormField label="Login" error={profileForm.formState.errors.login?.message} required>
+            <FormField label={t('Login')} error={profileForm.formState.errors.login?.message} required>
               <Input
                 placeholder="admin"
                 {...profileForm.register('login')}
                 error={!!profileForm.formState.errors.login}
               />
             </FormField>
-            <FormField label="Email" error={profileForm.formState.errors.email?.message} required>
+            <FormField label={t('Email')} error={profileForm.formState.errors.email?.message} required>
               <Input
                 type="email"
                 placeholder="admin@hotel.com"
@@ -123,16 +125,16 @@ export function ProfilePage() {
 
             <div className={s.formActions}>
               <Button type="submit" loading={isSavingProfile}>
-                Save profile
+                {t('Save profile')}
               </Button>
             </div>
           </form>
         </section>
 
         <section className={s.panel}>
-          <h3>Change password</h3>
+          <h3>{t('Change password')}</h3>
           <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)}>
-            <FormField label="Old password" error={passwordForm.formState.errors.oldPassword?.message} required>
+            <FormField label={t('Old password')} error={passwordForm.formState.errors.oldPassword?.message} required>
               <Input
                 type="password"
                 autoComplete="current-password"
@@ -141,7 +143,7 @@ export function ProfilePage() {
                 error={!!passwordForm.formState.errors.oldPassword}
               />
             </FormField>
-            <FormField label="New password" error={passwordForm.formState.errors.newPassword?.message} required>
+            <FormField label={t('New password')} error={passwordForm.formState.errors.newPassword?.message} required>
               <Input
                 type="password"
                 autoComplete="new-password"
@@ -151,7 +153,7 @@ export function ProfilePage() {
               />
             </FormField>
             <FormField
-              label="Confirm new password"
+              label={t('Confirm new password')}
               error={passwordForm.formState.errors.confirmPassword?.message}
               required
             >
@@ -166,14 +168,14 @@ export function ProfilePage() {
 
             <div className={s.formActions}>
               <Button type="submit" loading={isChangingPassword}>
-                Update password
+                {t('Update password')}
               </Button>
             </div>
           </form>
         </section>
       </div>
 
-      <p className={s.note}>Some settings are stored in mock mode and will be synced to backend later.</p>
+      <p className={s.note}>{t('Profile settings sync with your account.')}</p>
     </div>
   );
 }

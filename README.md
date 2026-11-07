@@ -1,12 +1,15 @@
 ﻿# Staff Manager Frontend
 
-Frontend app for staff operations management. The current version runs in mock mode (no backend required).
+Hotel staff operations app with an optional Express/Prisma backend. The frontend defaults to MSW mock mode for local UI work.
 
 ## Features
 - Auth with roles: `ADMIN`, `MANAGER`, `EMPLOYEE`, plus `GUEST` login.
 - Guest mode with read-only access to dashboard and core views.
 - Forgot/Reset password as UI wrapper flow (mock only).
 - Dashboard with quick insights (employees, shifts, notifications, announcements).
+- Monthly employee shift matrix with day/night types and API-backed leave, sick, and unavailable marks.
+- Shift task checklists and next-shift handover with acknowledgement tracking.
+- English, Czech, and Russian interface options; responsive navigation and light/dark themes.
 - Role-aware notifications for shifts, employees, schedule conflicts, and announcements.
 - Notifications with an unread counter, details modal, `Mark all as read`, and `Clear all`.
 - Announcements with filters, completion state, and delete action.
@@ -76,13 +79,16 @@ npm test
 - Admins and managers receive notifications about employee record changes and overlapping shifts (except for the manager who performed the action). Announcements are delivered to all other employee, admin, and manager accounts.
 - Opening an unread notification marks it as read. Users can mark all as read or clear only their own notifications; guest mode remains read-only.
 - New notifications are kept in the mock persistence store, ordered newest-first, and the sidebar unread counter refreshes periodically while the app is open.
-- Employee records without a linked app account (`userId`) cannot receive personal notifications. Creating accounts and sending email, SMS, browser push, or real-time server events are not implemented.
+- Employee records without a linked app account (`userId`) cannot receive personal notifications. SMS, browser push, and real-time server events are not implemented.
 
-## Backend (Back)
-There is no production backend in this repository. The notification workflows above run through MSW and local mock persistence only. A production backend must implement authenticated, user-scoped notification endpoints (`GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`, and `DELETE /notifications`) and create the same events when employee, shift, and announcement records change. Email/SMS/push delivery also requires a provider and server-side configuration.
+## Backend
+
+The Express + Prisma API in `backend/` implements authentication, employees, shifts, absences, notifications, announcements, tasks, and handovers. Password reset links use one-time hashed tokens and SMTP. A five-minute scheduler handles task carry-over, handover forwarding, overdue-task reminders, and critical handover escalation.
+
+Run the frontend and API separately using [backend/README.md](backend/README.md), or start the Docker Compose setup from the project root. For API mode set `VITE_USE_MOCKS=false`; set `VITE_API_URL` if the API is not served through the Compose `/api` proxy.
 
 ## Backend Integration Points
-1. `src/app/baseApi.ts` - base URL, headers, and shared API config.
+1. `src/app/baseApi.ts` - base URL, auth headers, and shared RTK Query config.
 2. `src/features/*/api/*.ts` - RTK Query endpoints per feature.
-3. `src/mocks/handlers/*` - disable/remove as real APIs become available.
-4. `src/mocks/data/*` - remove mock persistence after backend rollout.
+3. `src/mocks/handlers/*` - mock implementation selected by `VITE_USE_MOCKS`.
+4. `backend/src/routes/*` - API routes.

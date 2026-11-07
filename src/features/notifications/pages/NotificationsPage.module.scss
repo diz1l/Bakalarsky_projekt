@@ -171,3 +171,9 @@
     margin-top: 0;
   }
 }
+
+:global(html[data-theme='dark']) .card,
+:global(html[data-theme='dark']) .details { background:#111827; color:#e5e7eb; border-color:#334155; }
+:global(html[data-theme='dark']) .msg,
+:global(html[data-theme='dark']) .time,
+:global(html[data-theme='dark']) .detailGrid span { color:#94a3b8; }

@@ -14,13 +14,19 @@ import { Loader } from '@/components/ui/Loader/Loader';
 import { Modal } from '@/components/ui/Modal/Modal';
 import type { Notification } from '@/types';
 import clsx from 'clsx';
+import { Link } from 'react-router-dom';
 import s from './NotificationsPage.module.scss';
+import { useLocale } from '@/app/locale';
 
 const typeIcon: Record<string, string> = {
   info: 'i',
   warning: '!',
   success: 'ok',
   error: 'x',
+};
+
+const relatedPaths: Record<string, string> = {
+  shift: '/shifts', task: '/tasks', handover: '/handover', announcement: '/announcements', employee: '/employees',
 };
 
 export function NotificationsPage() {
@@ -32,6 +38,7 @@ export function NotificationsPage() {
   const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
   const [clearAll, { isLoading: clearing }] = useClearAllNotificationsMutation();
   const { showToast } = useToast();
+  const { locale, t } = useLocale();
   const [selected, setSelected] = useState<Notification | null>(null);
 
   const unread = useMemo(() => notifications?.filter((item) => !item.read) ?? [], [notifications]);
@@ -73,10 +80,10 @@ export function NotificationsPage() {
   if (isError) {
     return (
       <div>
-        <div className={s.toolbar}><h1>Notifications</h1></div>
-        <EmptyState title="Unable to load notifications" message="Check your connection and try again." />
+        <div className={s.toolbar}><h1>{t('Notifications')}</h1></div>
+        <EmptyState title={t('Unable to load notifications')} message={t('Check your connection and try again.')} />
         <div className={s.retry}>
-          <Button variant="secondary" onClick={() => void refetch()}>Try again</Button>
+          <Button variant="secondary" onClick={() => void refetch()}>{t('Try again')}</Button>
         </div>
       </div>
     );
@@ -85,18 +92,18 @@ export function NotificationsPage() {
   return (
     <div>
       <div className={s.toolbar}>
-        <h1>Notifications</h1>
+        <h1>{t('Notifications')}</h1>
 
         {canManage && (
           <div className={s.toolbarActions}>
             {unread.length > 0 && (
               <Button variant="secondary" size="sm" onClick={handleMarkAllRead} loading={markingAll}>
-                Mark all as read ({unread.length})
+                {t('Mark all as read')} ({unread.length})
               </Button>
             )}
             {!!notifications?.length && (
               <Button variant="ghost" size="sm" onClick={handleClearAll} loading={clearing}>
-                Clear all
+                {t('Clear all')}
               </Button>
             )}
           </div>
@@ -104,7 +111,7 @@ export function NotificationsPage() {
       </div>
 
       {!notifications?.length ? (
-        <EmptyState title="No notifications" message="You're all caught up!" />
+        <EmptyState title={t('No notifications')} message={t("You're all caught up!")} />
       ) : (
         <div className={s.list}>
           {notifications.map((item) => (
@@ -126,7 +133,7 @@ export function NotificationsPage() {
               <div className={s.body}>
                 <div className={s.title}>{item.title}</div>
                 <div className={s.msg}>{item.message}</div>
-                <div className={s.time}>{new Date(item.createdAt).toLocaleString()}</div>
+                <div className={s.time}>{new Date(item.createdAt).toLocaleString(locale === 'cs' ? 'cs-CZ' : locale === 'ru' ? 'ru-RU' : 'en-US')}</div>
               </div>
               {canManage && !item.read && (
                 <Button
@@ -137,7 +144,7 @@ export function NotificationsPage() {
                     void handleMarkRead(item.id);
                   }}
                 >
-                  Mark read
+                  {t('Mark read')}
                 </Button>
               )}
             </div>
@@ -148,23 +155,20 @@ export function NotificationsPage() {
       <Modal
         isOpen={!!selected}
         onClose={() => setSelected(null)}
-        title={selected?.title ?? 'Notification details'}
+        title={selected?.title ?? t('Notification details')}
         size="sm"
       >
         {selected && (
           <div className={s.details}>
             <p className={s.detailMessage}>{selected.message}</p>
             <div className={s.detailGrid}>
-              <span>Timestamp</span>
-              <strong>{new Date(selected.createdAt).toLocaleString()}</strong>
-              <span>Sender</span>
+              <span>{t('Timestamp')}</span>
+              <strong>{new Date(selected.createdAt).toLocaleString(locale === 'cs' ? 'cs-CZ' : locale === 'ru' ? 'ru-RU' : 'en-US')}</strong>
+              <span>{t('Sender')}</span>
               <strong>{selected.senderName}</strong>
-              <span>Sender email</span>
+              <span>{t('Sender email')}</span>
               <strong>{selected.senderEmail}</strong>
-              <span>Related type</span>
-              <strong>{selected.relatedType ?? 'N/A'}</strong>
-              <span>Related ID</span>
-              <strong>{selected.relatedId ?? 'N/A'}</strong>
+              {selected.relatedType && selected.relatedId && relatedPaths[selected.relatedType] && <><span>{t('Related item')}</span><strong><Link to={relatedPaths[selected.relatedType]} onClick={() => setSelected(null)}>{t('Open')} {t(selected.relatedType)}</Link></strong></>}
             </div>
           </div>
         )}

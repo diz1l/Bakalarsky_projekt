@@ -46,4 +46,11 @@
 .timeRow { display:flex; gap:12px; }
 .conflict { background:rgba($warning,.1); color:$warning; padding:10px 14px; border-radius:$radius; font-size:.8125rem; margin-bottom:12px; }
 .formActions { display:flex; justify-content:flex-end; gap:12px; padding-top:8px; }
+:global(html[data-theme='dark']) .scheduleCard { background:#111827; border-color:#334155; }
+:global(html[data-theme='dark']) .schedule thead th { background:#172033; color:#94a3b8; }
+:global(html[data-theme='dark']) .schedule thead th b { color:#e5e7eb; }
+:global(html[data-theme='dark']) .employeeName,
+:global(html[data-theme='dark']) .schedule td { background:#111827; color:#e5e7eb; }
+:global(html[data-theme='dark']) .subtitle,
+:global(html[data-theme='dark']) .employeeName small { color:#94a3b8; }
 @media(max-width:768px) { .toolbar { align-items:stretch; } .weekNav { width:100%; justify-content:space-between; } .timeRow { flex-direction:column; gap:0; } .formActions { flex-wrap:wrap; } .formActions>* { width:100%; } .tableScroll { max-height:calc(100vh - 310px); } }

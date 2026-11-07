@@ -23,12 +23,12 @@ export function ResetPasswordPage() {
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { oldPassword: '', newPassword: '', confirmPassword: '' },
+    defaultValues: { newPassword: '', confirmPassword: '' },
   });
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
-      await resetPassword({ token, oldPassword: data.oldPassword, newPassword: data.newPassword }).unwrap();
+      await resetPassword({ token, newPassword: data.newPassword }).unwrap();
       showToast('Password updated. Please sign in again.', 'success');
       navigate('/login');
     } catch {
@@ -61,15 +61,6 @@ export function ResetPasswordPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className={s.form}>
-          <FormField label="Old Password" error={errors.oldPassword?.message} required>
-            <Input
-              type="password"
-              placeholder="Current password"
-              autoComplete="current-password"
-              error={!!errors.oldPassword}
-              {...register('oldPassword')}
-            />
-          </FormField>
           <FormField label="New Password" error={errors.newPassword?.message} required>
             <Input
               type="password"

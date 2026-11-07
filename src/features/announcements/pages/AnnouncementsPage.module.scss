@@ -188,3 +188,7 @@
     width: 100%;
   }
 }
+
+:global(html[data-theme='dark']) .card { background:#111827; color:#e5e7eb; border-color:#334155; }
+:global(html[data-theme='dark']) .meta,
+:global(html[data-theme='dark']) .content { color:#cbd5e1; }

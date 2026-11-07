@@ -167,12 +167,12 @@ export interface ForgotPasswordRequest {
 
 export interface ForgotPasswordResponse {
   message: string;
-  token: string;
+  token?: string;
 }
 
 export interface ResetPasswordRequest {
   token: string;
-  oldPassword: string;
+  oldPassword?: string;
   newPassword: string;
 }
 

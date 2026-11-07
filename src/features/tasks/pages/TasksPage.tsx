@@ -75,7 +75,7 @@ export function TasksPage() {
 
   const { data: tasks = [], isLoading } = useGetTasksQuery(
     { date: slot.date, shiftType: slot.type, department: department || undefined },
-    { pollingInterval: 60_000 },
+    { pollingInterval: 60_000, skip: user?.role === 'EMPLOYEE' && !currentEmployee },
   );
   const [createTask, { isLoading: creating }] = useCreateTaskMutation();
   const [updateTask] = useUpdateTaskMutation();

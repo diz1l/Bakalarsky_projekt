@@ -37,6 +37,8 @@
   color: $text-primary;
 }
 
+.cardDetail { display:block; margin-top:3px; color:$danger; font-size:.72rem; font-weight:600; }
+
 .split {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -139,6 +141,16 @@
   align-items: center;
   justify-content: space-between;
 }
+
+:global(html[data-theme='dark']) .card,
+:global(html[data-theme='dark']) .section,
+:global(html[data-theme='dark']) .shiftCard,
+:global(html[data-theme='dark']) .notificationItem,
+:global(html[data-theme='dark']) .deptItem,
+:global(html[data-theme='dark']) .alertItem { background:#111827; color:#e5e7eb; border-color:#334155; }
+:global(html[data-theme='dark']) .cardLabel,
+:global(html[data-theme='dark']) .emptyText,
+:global(html[data-theme='dark']) .notificationMeta { color:#94a3b8; }
 
 .alertItem {
   justify-content: flex-start;

@@ -18,7 +18,7 @@ function status(note: NoteWithAcks) {
 }
 
 // Recipients are the people scheduled on the target shift; with nobody scheduled, the whole department.
-async function expectedRecipients(note: HandoverNote) {
+export async function expectedRecipients(note: HandoverNote) {
   const departmentFilter = note.department === 'ALL' ? {} : { department: note.department };
   const shifts = await prisma.shift.findMany({
     where: { date: note.targetDate, status: { not: 'cancelled' }, ...departmentFilter },
@@ -43,7 +43,7 @@ async function present(note: NoteWithAcks) {
 }
 
 // Unhandled action items follow the shifts instead of silently expiring. Run from a scheduler in production.
-async function forwardOverdue() {
+export async function forwardOverdue() {
   const current = getCurrentSlot();
   const notes = await prisma.handoverNote.findMany({ where: { requiresAction: true, resolvedAt: null }, include: { acknowledgements: true } });
   for (const note of notes) {

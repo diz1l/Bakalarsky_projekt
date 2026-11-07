@@ -73,3 +73,7 @@
   color: $text-light;
   font-size: 0.875rem;
 }
+
+:global(html[data-theme='dark']) .wrapper { background:#111827; }
+:global(html[data-theme='dark']) .table th { background:#172033; color:#94a3b8; border-color:#334155; }
+:global(html[data-theme='dark']) .table td { color:#e5e7eb; border-color:#334155; }

@@ -111,3 +111,8 @@
     width: 100%;
   }
 }
+
+:global(html[data-theme='dark']) .card,
+:global(html[data-theme='dark']) .panel { background:#111827; color:#e5e7eb; border-color:#334155; }
+:global(html[data-theme='dark']) .email,
+:global(html[data-theme='dark']) .note { color:#94a3b8; }

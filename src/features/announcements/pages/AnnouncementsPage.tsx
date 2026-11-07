@@ -14,12 +14,15 @@ import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { FormField } from '@/components/ui/FormField/FormField';
 import { Input } from '@/components/ui/Input/Input';
+import { Textarea } from '@/components/ui/Textarea/Textarea';
 import { Select } from '@/components/ui/Select/Select';
 import { Badge } from '@/components/ui/Badge/Badge';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import { Loader } from '@/components/ui/Loader/Loader';
 import clsx from 'clsx';
 import s from './AnnouncementsPage.module.scss';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog/ConfirmDialog';
+import { useLocale } from '@/app/locale';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -47,6 +50,7 @@ export function AnnouncementsPage() {
   const canCreate = can('announcements.create');
   const canManage = can('announcements.manage');
   const { showToast } = useToast();
+  const { t } = useLocale();
 
   const { data: announcements, isLoading } = useGetAnnouncementsQuery();
   const [create, { isLoading: creating }] = useCreateAnnouncementMutation();
@@ -55,6 +59,7 @@ export function AnnouncementsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
+  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
 
   const {
     register,
@@ -94,11 +99,10 @@ export function AnnouncementsPage() {
   };
 
   const onDelete = async (id: string) => {
-    if (!confirm('Delete this announcement?')) return;
-
     try {
       await remove(id).unwrap();
       showToast('Announcement deleted', 'success');
+      setAnnouncementToDelete(null);
     } catch {
       showToast('Delete failed', 'error');
     }
@@ -109,7 +113,7 @@ export function AnnouncementsPage() {
   return (
     <div>
       <div className={s.toolbar}>
-        <h1>Announcements</h1>
+        <h1>{t('Announcements')}</h1>
 
         <div className={s.toolbarRight}>
           <div className={s.filters}>
@@ -118,32 +122,32 @@ export function AnnouncementsPage() {
               onClick={() => setFilter('all')}
               type="button"
             >
-              All
+              {t('All')}
             </button>
             <button
               className={clsx(s.filterBtn, filter === 'active' && s.activeFilter)}
               onClick={() => setFilter('active')}
               type="button"
             >
-              Active
+              {t('Active')}
             </button>
             <button
               className={clsx(s.filterBtn, filter === 'completed' && s.activeFilter)}
               onClick={() => setFilter('completed')}
               type="button"
             >
-              Completed
+              {t('Completed')}
             </button>
           </div>
 
           {canCreate && (
-            <Button onClick={() => { reset(); setModalOpen(true); }}>New Announcement</Button>
+            <Button onClick={() => { reset(); setModalOpen(true); }}>{t('New Announcement')}</Button>
           )}
         </div>
       </div>
 
       {!filtered.length ? (
-        <EmptyState title="No announcements" message="Nothing has been posted yet." />
+        <EmptyState title={t('No announcements')} message={t('Nothing has been posted yet.')} />
       ) : (
         <div className={s.list}>
           {filtered.map((item) => (
@@ -152,7 +156,7 @@ export function AnnouncementsPage() {
                 <h3 className={clsx(item.completed && s.completedTitle)}>{item.title}</h3>
                 <div className={s.headerBadges}>
                   <Badge variant={prioVariant[item.priority]}>{item.priority}</Badge>
-                  {item.completed && <Badge variant="default">completed</Badge>}
+                  {item.completed && <Badge variant="default">{t('Completed')}</Badge>}
                 </div>
               </div>
 
@@ -175,7 +179,7 @@ export function AnnouncementsPage() {
                         void onToggleDone(item.id, event.target.checked);
                       }}
                     />
-                    Mark as done
+                    {t('Mark as done')}
                   </label>
 
                   <Button
@@ -184,11 +188,11 @@ export function AnnouncementsPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      void onDelete(item.id);
+                      setAnnouncementToDelete(item.id);
                     }}
                     loading={deleting}
                   >
-                    Delete
+                    {t('Delete')}
                   </Button>
                 </div>
               )}
@@ -197,27 +201,28 @@ export function AnnouncementsPage() {
         </div>
       )}
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="New Announcement">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={t('New Announcement')}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <FormField label="Title" error={errors.title?.message} required>
+          <FormField label={t('Title')} error={errors.title?.message} required>
             <Input {...register('title')} error={!!errors.title} />
           </FormField>
-          <FormField label="Content" error={errors.content?.message} required>
-            <Input {...register('content')} error={!!errors.content} />
+          <FormField label={t('Content')} error={errors.content?.message} required>
+            <Textarea {...register('content')} error={!!errors.content} />
           </FormField>
-          <FormField label="Priority" error={errors.priority?.message}>
-            <Select options={PRIORITIES} {...register('priority')} error={!!errors.priority} />
+          <FormField label={t('Priority')} error={errors.priority?.message}>
+            <Select options={PRIORITIES.map((option) => ({ ...option, label: t(option.label) }))} {...register('priority')} error={!!errors.priority} />
           </FormField>
           <div className={s.formActions}>
             <Button variant="secondary" type="button" onClick={() => setModalOpen(false)}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" loading={creating}>
-              Create
+              {t('Create')}
             </Button>
           </div>
         </form>
       </Modal>
+      <ConfirmDialog isOpen={!!announcementToDelete} title={t('Delete announcement?')} message={t('This announcement will be permanently deleted.')} loading={deleting} onClose={() => setAnnouncementToDelete(null)} onConfirm={() => { if (announcementToDelete) void onDelete(announcementToDelete); }} confirmLabel={t('Delete')} cancelLabel={t('Cancel')} />
     </div>
   );
 }

@@ -18,7 +18,7 @@ function isoWeekday(date: string) {
 }
 
 // Checklists are generated lazily from the previous shift onwards; the unique key keeps it idempotent.
-async function ensureTemplateTasks(slot: ShiftSlot) {
+export async function ensureTemplateTasks(slot: ShiftSlot) {
   if (compareSlots(slot, getPreviousSlot(getCurrentSlot())) < 0) return;
   const templates = await prisma.taskTemplate.findMany({ where: { active: true, shiftType: { in: ['ANY', slot.type] } } });
   for (const template of templates) {
@@ -38,7 +38,7 @@ async function ensureTemplateTasks(slot: ShiftSlot) {
 
 // Open one-off tasks of finished shifts move to the next shift; `carriedOverFrom` is unique, so it happens once.
 // In production run this from a scheduler every few minutes instead of on each request.
-async function carryOverUnfinishedTasks() {
+export async function carryOverUnfinishedTasks() {
   const current = getCurrentSlot();
   const open = await prisma.shiftTask.findMany({ where: { status: 'open', templateId: null, date: { lte: current.date } } });
   for (const task of open) {

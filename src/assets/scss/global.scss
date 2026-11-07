@@ -22,20 +22,16 @@ body {
   line-height: 1.5;
 }
 
-html[data-theme='dark'] body { background:#0b1220; color:#e5e7eb; }
-html[data-theme='dark'] .content { background:#0b1220; }
-html[data-theme='dark'] header { background:#111827; border-color:#263244; }
-html[data-theme='dark'] main,
-html[data-theme='dark'] section,
-html[data-theme='dark'] article,
-html[data-theme='dark'] [class*='Card'],
-html[data-theme='dark'] [class*='card'],
-html[data-theme='dark'] [class*='surface'] { background-color:#111827; color:#e5e7eb; border-color:#263244; }
+html { --app-bg:#f1f5f9; --app-surface:#fff; --app-text:#0f172a; --app-muted:#64748b; --app-border:#e2e8f0; --app-field:#fff; }
+html[data-theme='dark'] { --app-bg:#0b1220; --app-surface:#111827; --app-text:#e5e7eb; --app-muted:#94a3b8; --app-border:#334155; --app-field:#0f172a; color-scheme:dark; }
+body { background:var(--app-bg); color:var(--app-text); }
+html[data-theme='dark'] .content { background:var(--app-bg); }
+html[data-theme='dark'] header { background:var(--app-surface); border-color:var(--app-border); }
 html[data-theme='dark'] input,
 html[data-theme='dark'] select,
-html[data-theme='dark'] textarea { background:#0f172a; color:#e5e7eb; border-color:#334155; }
-html[data-theme='dark'] table th { background:#172033; color:#e5e7eb; border-color:#334155; }
-html[data-theme='dark'] table td { border-color:#334155; }
+html[data-theme='dark'] textarea { background:var(--app-field); color:var(--app-text); border-color:var(--app-border); }
+html[data-theme='dark'] table th { background:#172033; color:var(--app-text); border-color:var(--app-border); }
+html[data-theme='dark'] table td { border-color:var(--app-border); }
 html[data-theme='dark'] a { color:inherit; }
 
 a {

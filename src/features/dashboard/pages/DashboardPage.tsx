@@ -4,13 +4,17 @@ import { useGetEmployeesQuery } from '@/features/employees/api/employeesApi';
 import { useGetShiftsQuery } from '@/features/shifts/api/shiftsApi';
 import { useGetNotificationsQuery } from '@/features/notifications/api/notificationsApi';
 import { useGetAnnouncementsQuery } from '@/features/announcements/api/announcementsApi';
+import { useGetTasksQuery } from '@/features/tasks/api/tasksApi';
+import { useGetHandoverNotesQuery } from '@/features/handover/api/handoverApi';
+import { getCurrentSlot } from '@/utils/shiftUtils';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermissions } from '@/hooks/usePermissions';
 import { formatTime, getWeekDates, toDateString } from '@/utils/dateUtils';
 import s from './DashboardPage.module.scss';
+import { useLocale } from '@/app/locale';
 
-function dateLabel(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
+function dateLabel(value: string, locale: string) {
+  return new Date(value).toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
     weekday: 'short',
@@ -26,6 +30,7 @@ function getUpcomingWindowEnd(from: Date, days: number) {
 export function DashboardPage() {
   const { user } = useAuth();
   const { can } = usePermissions();
+  const { locale, t } = useLocale();
 
   const now = new Date();
   const today = toDateString(now);
@@ -41,6 +46,9 @@ export function DashboardPage() {
   const { data: nextWeekShifts = [] } = useGetShiftsQuery({ weekStart: nextWeekStart });
   const { data: notifications = [] } = useGetNotificationsQuery(user?.id ?? '');
   const { data: announcements = [] } = useGetAnnouncementsQuery();
+  const currentSlot = getCurrentSlot(now);
+  const { data: currentTasks = [] } = useGetTasksQuery({ date: currentSlot.date, shiftType: currentSlot.type });
+  const { data: handovers = [] } = useGetHandoverNotesQuery('active');
 
   const mergedShifts = useMemo(() => {
     const map = new Map<string, (typeof weekShifts)[number]>();
@@ -50,16 +58,12 @@ export function DashboardPage() {
     return [...map.values()];
   }, [weekShifts, nextWeekShifts]);
 
-  const upcomingShifts = useMemo(
-    () =>
-      mergedShifts
-        .filter((shift) => shift.date >= today && shift.date <= next7Days)
-        .sort((left, right) => {
-          const byDate = left.date.localeCompare(right.date);
-          return byDate !== 0 ? byDate : left.startTime.localeCompare(right.startTime);
-        }),
-    [mergedShifts, next7Days, today],
-  );
+  const upcomingShifts = mergedShifts
+    .filter((shift) => shift.date >= today && shift.date <= next7Days)
+    .sort((left, right) => {
+      const byDate = left.date.localeCompare(right.date);
+      return byDate !== 0 ? byDate : left.startTime.localeCompare(right.startTime);
+    });
 
   const activeEmployees = useMemo(
     () => employees.filter((employee) => employee.status === 'active'),
@@ -79,6 +83,9 @@ export function DashboardPage() {
 
   const unreadNotifications = notifications.filter((item) => !item.read).length;
   const activeAnnouncements = announcements.filter((item) => !item.completed).length;
+  const openCurrentTasks = currentTasks.filter((task) => task.status === 'open').length;
+  const pendingHandovers = handovers.filter((note) => !note.acknowledgements.some((ack) => ack.userId === user?.id && (note.requiresAction ? ack.actionTakenAt : ack.readAt)));
+  const criticalHandovers = pendingHandovers.filter((note) => note.priority === 'critical').length;
 
   const lowStaffDays = useMemo(() => {
     const dayCounts = new Map<string, number>();
@@ -119,56 +126,58 @@ export function DashboardPage() {
   ).length;
 
   const alerts = [
-    overlapCount > 0 ? `${overlapCount} shift overlap issue(s) found in the next 7 days.` : null,
+    overlapCount > 0 ? t('shift overlap warning').replace('{count}', String(overlapCount)) : null,
     lowStaffDays.length > 0
-      ? `${lowStaffDays.length} day(s) have low staffing (${lowStaffDays
+      ? t('low staffing warning').replace('{count}', String(lowStaffDays.length)).replace('{days}', lowStaffDays
           .slice(0, 2)
-          .map((date) => dateLabel(date))
-          .join(', ')}).`
+          .map((date) => dateLabel(date, locale === 'cs' ? 'cs-CZ' : locale === 'ru' ? 'ru-RU' : 'en-US'))
+          .join(', '))
       : null,
-    warningNotifications > 0 ? `${warningNotifications} warning notification(s) need attention.` : null,
+    warningNotifications > 0 ? t('warning notifications').replace('{count}', String(warningNotifications)) : null,
   ].filter(Boolean) as string[];
 
   return (
     <div className={s.page}>
-      <h1 className={s.title}>Welcome back, {user?.name}</h1>
+      <h1 className={s.title}>{t('Welcome back')}, {user?.name}</h1>
 
       <div className={s.grid}>
         <div className={s.card}>
-          <span className={s.cardLabel}>Active Employees</span>
+          <span className={s.cardLabel}>{t('Active Employees')}</span>
           <span className={s.cardValue}>{can('employees.view') ? activeEmployees.length : '-'}</span>
         </div>
         <div className={s.card}>
-          <span className={s.cardLabel}>Upcoming Shifts (7 days)</span>
+          <span className={s.cardLabel}>{t('Upcoming Shifts (7 days)')}</span>
           <span className={s.cardValue}>{upcomingShifts.length}</span>
         </div>
         <div className={s.card}>
-          <span className={s.cardLabel}>Unread Notifications</span>
+          <span className={s.cardLabel}>{t('Unread Notifications')}</span>
           <span className={s.cardValue}>{unreadNotifications}</span>
         </div>
         <div className={s.card}>
-          <span className={s.cardLabel}>Active Announcements</span>
+          <span className={s.cardLabel}>{t('Active Announcements')}</span>
           <span className={s.cardValue}>{activeAnnouncements}</span>
         </div>
+        {can('tasks.view') && <Link to="/tasks" className={s.card}><span className={s.cardLabel}>{t('Open tasks in current shift')}</span><span className={s.cardValue}>{openCurrentTasks}</span></Link>}
+        {can('handover.view') && <Link to="/handover" className={s.card}><span className={s.cardLabel}>{t('Handover awaiting acknowledgement')}</span><span className={s.cardValue}>{pendingHandovers.length}<small className={s.cardDetail}>{criticalHandovers} {t('critical')}</small></span></Link>}
       </div>
 
       <div className={s.split}>
         <section className={s.section}>
           <div className={s.sectionHeader}>
-            <h2 className={s.sectionTitle}>Upcoming Shifts</h2>
+            <h2 className={s.sectionTitle}>{t('Upcoming Shifts')}</h2>
             <Link to="/shifts" className={s.sectionLink}>
-              Open shifts
+              {t('Open shifts')}
             </Link>
           </div>
           {!upcomingShifts.length ? (
-            <p className={s.emptyText}>No upcoming shifts in the next 7 days.</p>
+            <p className={s.emptyText}>{t('No upcoming shifts in the next 7 days.')}</p>
           ) : (
             <div className={s.shiftList}>
               {upcomingShifts.slice(0, 8).map((shift) => (
                 <div key={shift.id} className={s.shiftCard}>
                   <strong>{shift.employeeName}</strong>
                   <span>
-                    {dateLabel(shift.date)} | {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                    {dateLabel(shift.date, locale === 'cs' ? 'cs-CZ' : locale === 'ru' ? 'ru-RU' : 'en-US')} | {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
                   </span>
                   <span className={s.dept}>{shift.department}</span>
                 </div>
@@ -179,13 +188,13 @@ export function DashboardPage() {
 
         <section className={s.section}>
           <div className={s.sectionHeader}>
-            <h2 className={s.sectionTitle}>Notifications Summary</h2>
+            <h2 className={s.sectionTitle}>{t('Notifications Summary')}</h2>
             <Link to="/notifications" className={s.sectionLink}>
-              Open notifications
+              {t('Open notifications')}
             </Link>
           </div>
           {!notifications.length ? (
-            <p className={s.emptyText}>No notifications yet.</p>
+            <p className={s.emptyText}>{t('No notifications yet.')}</p>
           ) : (
             <div className={s.notificationSummary}>
               {notifications.slice(0, 4).map((item) => (
@@ -202,17 +211,17 @@ export function DashboardPage() {
       <div className={s.split}>
         <section className={s.section}>
           <div className={s.sectionHeader}>
-            <h2 className={s.sectionTitle}>Employees by Department</h2>
+            <h2 className={s.sectionTitle}>{t('Employees by Department')}</h2>
             {can('employees.view') && (
               <Link to="/employees" className={s.sectionLink}>
-                Open employees
+                {t('Open employees')}
               </Link>
             )}
           </div>
           {!can('employees.view') ? (
-            <p className={s.emptyText}>Hidden for your role.</p>
+            <p className={s.emptyText}>{t('Hidden for your role.')}</p>
           ) : employeesByDepartment.length === 0 ? (
-            <p className={s.emptyText}>No active employee data.</p>
+            <p className={s.emptyText}>{t('No active employee data.')}</p>
           ) : (
             <ul className={s.deptList}>
               {employeesByDepartment.map((entry) => (
@@ -227,13 +236,13 @@ export function DashboardPage() {
 
         <section className={s.section}>
           <div className={s.sectionHeader}>
-            <h2 className={s.sectionTitle}>Alerts</h2>
+            <h2 className={s.sectionTitle}>{t('Alerts')}</h2>
             <Link to="/announcements" className={s.sectionLink}>
-              Open announcements
+              {t('Open announcements')}
             </Link>
           </div>
           {!alerts.length ? (
-            <p className={s.emptyText}>No critical alerts right now.</p>
+            <p className={s.emptyText}>{t('No critical alerts right now.')}</p>
           ) : (
             <ul className={s.alertList}>
               {alerts.map((alert) => (

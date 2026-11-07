@@ -15,6 +15,7 @@ export function ForgotPasswordPage() {
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
   const { showToast } = useToast();
   const [token, setToken] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
   const {
     register,
@@ -28,7 +29,8 @@ export function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       const response = await forgotPassword(data).unwrap();
-      setToken(response.token);
+      setToken(response.token ?? null);
+      setSent(true);
     } catch {
       showToast('Unable to process request right now', 'error');
     }
@@ -42,12 +44,10 @@ export function ForgotPasswordPage() {
           <p>Enter your email to receive a reset link</p>
         </div>
 
-        {token ? (
+        {sent ? (
           <div className={s.successState}>
             <p>If this email exists, we sent a reset link.</p>
-            <Link className={s.mockLink} to={`/reset-password?token=${encodeURIComponent(token)}`}>
-              Open mock reset page
-            </Link>
+            {token && <Link className={s.mockLink} to={`/reset-password?token=${encodeURIComponent(token)}`}>Open mock reset page</Link>}
             <Link className={s.backLink} to="/login">
               Back to login
             </Link>

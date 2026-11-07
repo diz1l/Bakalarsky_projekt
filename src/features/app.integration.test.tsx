@@ -67,7 +67,6 @@ describe('App flows (mock mode)', () => {
     const user = userEvent.setup();
     renderAtRoute(<App />, '/reset-password?token=mock-reset-123');
 
-    await user.type(screen.getByPlaceholderText('Current password'), 'password123');
     await user.type(screen.getByPlaceholderText('New password'), 'newpassword123');
     await user.type(screen.getByPlaceholderText('Confirm new password'), 'different123');
     await user.click(screen.getByRole('button', { name: 'Update password' }));
@@ -123,9 +122,10 @@ describe('App flows (mock mode)', () => {
     await screen.findByRole('heading', { name: 'Announcements' });
 
     await user.click(screen.getByLabelText('mark-done-ann-1'));
-    expect(await screen.findByText('completed')).toBeInTheDocument();
+    expect(await screen.findByText('Completed')).toBeInTheDocument();
 
     await user.click(screen.getByLabelText('delete-announcement-ann-1'));
+    await user.click(screen.getAllByText('Delete', { selector: 'button' }).at(-1)!);
     await waitFor(() => {
       expect(screen.queryByText('Staff Meeting')).not.toBeInTheDocument();
     });
@@ -168,6 +168,6 @@ describe('App flows (mock mode)', () => {
     await user.type(screen.getByPlaceholderText('Confirm new password'), 'newpass123');
     await user.click(screen.getByRole('button', { name: 'Update password' }));
 
-    expect(await screen.findByText('Password updated in mock mode')).toBeInTheDocument();
+    expect(await screen.findByText('Password updated successfully')).toBeInTheDocument();
   });
 });

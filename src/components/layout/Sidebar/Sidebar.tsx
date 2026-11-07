@@ -69,7 +69,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+export function Sidebar({ collapsed, mobileOpen, onToggle, onNavigate }: { collapsed: boolean; mobileOpen: boolean; onToggle: () => void; onNavigate: () => void }) {
   const { can } = usePermissions();
   const { user } = useAuth();
   const { locale, setLocale, t } = useLocale();
@@ -81,7 +81,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
   useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('staff-theme', dark ? 'dark' : 'light'); }, [dark]);
 
   return (
-    <aside className={`${s.sidebar} ${collapsed ? s.collapsed : ''}`}>
+    <aside className={`${s.sidebar} ${collapsed ? s.collapsed : ''} ${mobileOpen ? s.mobileOpen : ''}`}>
       <div className={s.brand}>
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 21h18M3 7v1a3 3 0 006 0V7m0 1a3 3 0 006 0V7m0 1a3 3 0 006 0V7H3l2-4h14l2 4M5 21V10.87M19 21V10.87" />
@@ -94,6 +94,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={() => { if (window.matchMedia?.('(max-width: 992px)').matches) onNavigate(); }}
             className={({ isActive }) => clsx(s.link, isActive && s.active)}
           >
             {item.icon}
@@ -103,10 +104,10 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
         ))}
       </nav>
       <div className={s.bottom}>
-        {can('notifications.view') && <Link to="/notifications" className={s.bottomLink} title={t('Notifications')}><Icon d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /><span>{t('Notifications')}</span>{unreadCount > 0 && <b>{unreadCount > 99 ? '99+' : unreadCount}</b>}</Link>}
+        {can('notifications.view') && <Link to="/notifications" onClick={() => { if (window.matchMedia?.('(max-width: 992px)').matches) onNavigate(); }} className={s.bottomLink} title={t('Notifications')}><Icon d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /><span>{t('Notifications')}</span>{unreadCount > 0 && <b>{unreadCount > 99 ? '99+' : unreadCount}</b>}</Link>}
         <button className={s.bottomLink} onClick={() => setDark((value) => !value)} title={t(dark ? 'Light' : 'Dark')}><span className={s.controlIcon}>{dark ? '☀' : '☾'}</span><span>{t(dark ? 'Light' : 'Dark')}</span></button>
         <label className={s.language}><span className={s.controlIcon}>文</span><span>{t('Language')}</span><select aria-label={t('Language')} value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="en">EN</option><option value="cs">CS</option><option value="ru">RU</option></select></label>
-        <button className={s.collapse} onClick={onToggle} aria-label={t(collapsed ? 'Expand sidebar' : 'Collapse sidebar')}>{collapsed ? '›' : '‹'}<span>{collapsed ? t('Expand sidebar') : t('Collapse sidebar')}</span></button>
+        <button className={s.collapse} onClick={() => { if (window.matchMedia?.('(max-width: 992px)').matches) onNavigate(); else onToggle(); }} aria-label={t(collapsed ? 'Expand sidebar' : 'Collapse sidebar')}>{collapsed ? '›' : '‹'}<span>{collapsed ? t('Expand sidebar') : t('Collapse sidebar')}</span></button>
       </div>
     </aside>
   );
